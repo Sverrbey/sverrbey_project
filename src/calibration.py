@@ -15,48 +15,6 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.patches as patches
 import random
 
-
-def generate_contour_map(tif_file_path, contour_interval=10):
-    """
-    Generate and plot a contour map from a georeferenced TIFF file.
-
-    Parameters:
-        tif_file_path (str): Path to the .tif file.
-        contour_interval (int): Interval between contour levels.
-    """
-    try:
-        # Open the TIFF file
-        with rasterio.open(tif_file_path) as src:
-            # Read the raster data
-            data = src.read(1)  # Read the first band (assumes single-band DEM)
-            transform = src.transform  # Georeferencing transform
-            bounds = src.bounds  # Raster bounds
-            crs = src.crs  # Coordinate reference system
-
-            # Create coordinate arrays for the raster
-            rows, cols = data.shape
-            x = np.linspace(bounds.left, bounds.right, cols)
-            y = np.linspace(bounds.top, bounds.bottom, rows)
-            X, Y = np.meshgrid(x, y[::-1])  # Flip Y to match raster orientation
-
-            # Mask invalid data (e.g., nodata values)
-            data = np.ma.masked_where(data == src.nodata, data)
-
-        # Plot the contour map
-        plt.figure(figsize=(10, 8))
-        contour = plt.contour(X, Y, data, levels=np.arange(data.min(), data.max(), contour_interval), cmap="terrain")
-        plt.clabel(contour, inline=True, fontsize=8, fmt='%1.0f')
-        plt.title("Contour Map")
-        plt.xlabel("Longitude")
-        plt.ylabel("Latitude")
-        plt.colorbar(label="Elevation (units)")
-        plt.grid()
-        plt.show()
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-
 def read_tfw(file_path):
     """
     Reads a TFW file and displays the georeferencing information.
@@ -153,50 +111,6 @@ def extract_altitude_points(tif_file_path, output_csv=None):
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
-
-
-def create_tin_from_csv(csv_file_path):
-    """
-    Creates and visualizes a TIN (Triangulated Irregular Network) from a CSV file with altitude points.
-
-    Parameters:
-        csv_file_path (str): Path to the CSV file containing X, Y, Altitude columns.
-
-    Returns:
-        delaunay (scipy.spatial.Delaunay): Delaunay triangulation object.
-    """
-    try:
-        # Load the CSV file
-        df = pd.read_csv(csv_file_path)
-
-        # Check for required columns
-        if not {'X', 'Y', 'Altitude'}.issubset(df.columns):
-            raise ValueError("The CSV file must contain 'X', 'Y', and 'Altitude' columns.")
-
-        # Extract coordinates and altitude
-        points = df[['X', 'Y']].values
-        altitudes = df['Altitude'].values
-
-        # Perform Delaunay triangulation
-        delaunay = Delaunay(points)
-
-        # Visualize the TIN
-        plt.figure(figsize=(10, 8))
-        plt.triplot(points[:, 0], points[:, 1], delaunay.simplices, color='gray', linewidth=0.5)
-        plt.scatter(points[:, 0], points[:, 1], c=altitudes, cmap='terrain', s=10)
-        plt.colorbar(label='Altitude')
-        plt.title("TIN (Triangulated Irregular Network)")
-        plt.xlabel("X Coordinate")
-        plt.ylabel("Y Coordinate")
-        plt.grid()
-        plt.show()
-
-        return delaunay
-
-    except FileNotFoundError:
-        print(f"File not found: {csv_file_path}")
-    except Exception as e:
-        print(f"An error occurred: {e}")
 
 
 def cluster_elevation_data(csv_file_path, n_clusters=3, output_csv=None):
@@ -432,6 +346,47 @@ def overlay_tin_on_tfw(clustered_csv_file_path, tif_file_path, output_csv=None):
 
     except FileNotFoundError as e:
         print(f"File not found: {e}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+def generate_contour_map(tif_file_path, contour_interval=10):
+    """
+    Generate and plot a contour map from a georeferenced TIFF file.
+
+    Parameters:
+        tif_file_path (str): Path to the .tif file.
+        contour_interval (int): Interval between contour levels.
+    """
+    try:
+        # Open the TIFF file
+        with rasterio.open(tif_file_path) as src:
+            # Read the raster data
+            data = src.read(1)  # Read the first band (assumes single-band DEM)
+            transform = src.transform  # Georeferencing transform
+            bounds = src.bounds  # Raster bounds
+            crs = src.crs  # Coordinate reference system
+
+            # Create coordinate arrays for the raster
+            rows, cols = data.shape
+            x = np.linspace(bounds.left, bounds.right, cols)
+            y = np.linspace(bounds.top, bounds.bottom, rows)
+            X, Y = np.meshgrid(x, y[::-1])  # Flip Y to match raster orientation
+
+            # Mask invalid data (e.g., nodata values)
+            data = np.ma.masked_where(data == src.nodata, data)
+
+        # Plot the contour map
+        plt.figure(figsize=(10, 8))
+        contour = plt.contour(X, Y, data, levels=np.arange(data.min(), data.max(), contour_interval), cmap="terrain")
+        plt.clabel(contour, inline=True, fontsize=8, fmt='%1.0f')
+        plt.title("Contour Map")
+        plt.xlabel("Longitude")
+        plt.ylabel("Latitude")
+        plt.colorbar(label="Elevation (units)")
+        plt.grid()
+        plt.show()
+
     except Exception as e:
         print(f"An error occurred: {e}")
 
