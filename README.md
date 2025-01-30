@@ -13,3 +13,5 @@ that are used in the project are stored
 
 * `src`: this folder is meant as the source folder for the 
 applications made for the project
+
+* `calibration`: The data used might be to large for efficient computation, therefore the functions in calibration are meant to format the data. 
