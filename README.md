@@ -1,4 +1,8 @@
-# The file hierarchy
+# A IntHydro project - Intellingent Streamflow Monitoring System for High Altitude Hydro Power Reservoirs
+
+This code is a part of a master thesis titled 'PLACEHOLDER' written in collaboration with NTNU and IntHydro. It runs machine learning models meant for streamflow forecasting used in hydro power scheduling and operation. 
+
+## The file hierarchy
 
 ### Folders
 * `data`: This folder contains the raw and processed data for
