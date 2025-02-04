@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="style.css" />
+    <title> Vannveisskjema </title>
+</head>
+<body>
+<div id="page">
+    <div id="menu">
+        <div id="logo-div">
+            <img id="logo" src="images/logo-inthydro.png">
+        </div>
+        <div class="child-menu" id="plant1">
+            <button onclick="home()" class="buttons-menu">
+                <h2>Home</h2>
+                <img class="arrow" src="images/snapshot-arrow.png" alt="Image">
+            </button>
+        </div>
+        <div class="child-menu" id="plant1">
+            <button onclick="showPlant('plant1')" class="buttons-menu">
+                <h2>Plant 1</h2>
+                <img class="arrow" src="images/snapshot-arrow.png" alt="Image">
+            </button>
+        </div>
+        <div class="child-menu" id="plant2">
+            <button onclick="showPlant('plant2')" class="buttons-menu">
+                <h2>Plant 2</h2>
+                <img class="arrow" src="images/snapshot-arrow.png" alt="Image">
+            </button>
+        </div>
+    </div>
+    <div id="main">
+        <div id="mother">
+            <h1>Intelligent dispatching and optimal operation of cascade hydropower plants based on big spatiotemporal data (IntHydro)</h1>
+            <p>
+                In Norway, hydropower accounts for 96% of the electricity generation. China's hydropower sector has grown twenty-fold to a 
+                total capacity of 352 GW in the past 40 years. This represents over a quarter of the world's hydropower installed capacity.
+            </p>
+            <p>
+                Today fundamental stochastic market models are used. These models assume that all uncertainty is revealed in weekly steps
+                and that all functional relationships are linear. In a power market with increasing shares of variable renewable energy and
+                time resolutions, decision support tools that can swiftly adapt to changes in the power system is essential.
+            </p>
+            <p>
+                Our goal will be attained by achieving the following objectives:
+            </p>
+            <ul>
+                <li>What is the benefit of the digitalisation of hydropower scheduling?</li>
+                <li>
+                    Elaborate on the digital platform for the integration of artificial intelligence in different stages of hydropower
+                    scheduling models and define comprehensive coupling principles between the strategic and operational modelling.
+                </li>
+                <li>
+                    Develop a prototype for fundamental hydropower modelling that allows modelling of RES on a detailed time scale.
+                </li>
+            </ul>
+            <p>
+                The complete innovation chain in IntHydro consists of sub-innovations that can be assigned to intelligent monitoring
+                systems, decision support for optimal operation and handle the real-time challenges. By implementing a practical demonstration
+                tool, the research carried out within IntHydro will allow to accurately quantify the potential value of the scheduling strategies
+                regarding real cases in terms of technical and economic issues.
+            </p>
+        </div>
+    </div>
+    <!-- Overlay div to display the image -->
+    <div id="overlay" onclick="hideImage()">
+        <img id="overlay-image" src="" alt="Image">
+    </div>
+</div>
+    <script>
+
+        var originalMotherContent = ''; // Store the original content
+        var dictionary = {
+            "plant1": {
+                "waterWay":"images/waterWay/plant1.jpg",
+                "interestPoints": [
+                    {"top":160, "left":240, "source":"images/waterWay/plant1/point1.png", "ref":0},
+                    {"top":300, "left":700, "source":"images/waterWay/plant1/point2.png", "ref":1}
+                ]
+            },
+            "plant2": {
+                "waterWay":"images/waterWay/plant2.jpg",
+                "interestPoints": [
+                    {"top":220, "left":780, "source":"images/waterWay/plant2/point1.png",  "ref":0}
+                ]
+            }
+        }
+
+        function showGraph(folder, ref) {
+            var overlay = document.getElementById('overlay');
+            var overlayImage = document.getElementById('overlay-image');
+            var imagePath = dictionary[folder]["interestPoints"][ref]["source"];
+            // Set the image source and display the overlay
+            overlayImage.src = imagePath;
+            overlay.style.display = 'block';
+        }
+
+        function hideImage() {
+            var overlay = document.getElementById('overlay');
+            overlay.style.display = 'none';
+        }
+
+        function home() {
+            var main = document.getElementById('main');
+            var mother = document.getElementById('mother');
+            main.style.backgroundImage =  '';
+
+            if (!originalMotherContent) {
+            originalMotherContent = mother.innerHTML; // Store the original content
+            }
+
+            mother.innerHTML = originalMotherContent; // Restore the original content
+            mother.style.display = 'block'; // Ensure the mother div is visible
+        }
+
+        function showPlant(folder) {
+        var main = document.getElementById('main');
+        var mother = document.getElementById('mother');
+        main.style.backgroundImage = "url(" + dictionary[folder]["waterWay"] + ")";
+        
+        if (!originalMotherContent) {
+            originalMotherContent = mother.innerHTML; // Store the original content
+        }
+        
+        mother.innerHTML = '';
+
+        // Create buttons dynamically
+        for (var i = 0; i < dictionary[folder]["interestPoints"].length; i++) {
+            var button = document.createElement("button");
+            var container = document.createElement("div");
+            button.textContent = "show";
+            container.className = "child";
+            button.className = "buttons";
+            container.style.top = dictionary[folder]["interestPoints"][i]["top"] + "px";
+            container.style.left = dictionary[folder]["interestPoints"][i]["left"] + "px";
+            // Use IIFE to capture the value of i
+            (function(index) {
+                button.onclick = function() {
+                    showGraph(folder, dictionary[folder]["interestPoints"][index]["ref"]);
+                };
+            })(i);
+            container.appendChild(button);
+            mother.appendChild(container);
+        }
+        mother.style.display = 'block'; // Ensure the mother div is visible
+    }
+    </script>
+</body>
+</html>
