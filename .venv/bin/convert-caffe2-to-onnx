@@ -1,4 +1,4 @@
-#!/Users/SverreB/Github_Repo/sverrbey_project_fresh/.venv/bin/python3.12
+#!/Users/SverreB/Github_Repo/sverrbey_project/.venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys
