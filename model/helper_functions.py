@@ -292,3 +292,65 @@ def download_data(source: str,
             os.remove(data_path / target_file)
     
     return image_path
+
+def simplify_tiff(input_tiff_path, output_tiff_path, scale_factor=2):
+    """
+    Simplifies a TIFF file by downsampling it.
+
+    Parameters:
+    - input_tiff_path (str): Path to the input TIFF file.
+    - output_tiff_path (str): Path to save the simplified TIFF file.
+    - scale_factor (int): Factor by which to downsample the image. Default is 2.
+    """
+    with rasterio.open(input_tiff_path) as src:
+        # Calculate the new dimensions
+        new_height = src.height // scale_factor
+        new_width = src.width // scale_factor
+
+        # Read the data and downsample
+        data = src.read(
+            out_shape=(
+                src.count,
+                new_height,
+                new_width
+            ),
+            resampling=Resampling.bilinear
+        )
+
+        # Scale image transform
+        transform = src.transform * src.transform.scale(
+            (src.width / data.shape[-1]),
+            (src.height / data.shape[-2])
+        )
+
+        # Update metadata
+        metadata = src.meta.copy()
+        metadata.update({
+            'height': new_height,
+            'width': new_width,
+            'transform': transform
+        })
+
+        # Write the simplified TIFF file
+        with rasterio.open(output_tiff_path, 'w', **metadata) as dst:
+            dst.write(data)
+
+def utm_to_latlon(easting, northing, zone_number=33, northern_hemisphere=True):
+    """
+    Convert UTM coordinates to geographical coordinates (latitude and longitude).
+    :param easting: UTM easting coordinate.
+    :param northing: UTM northing coordinate.
+    :param zone_number: UTM zone number.
+    :param northern_hemisphere: Boolean indicating if the coordinates are in the northern hemisphere.
+    :return: Tuple of (latitude, longitude).
+    """
+    # Define the UTM projection
+    utm_proj = pyproj.Proj(proj='utm', zone=zone_number, ellps='WGS84', south=not northern_hemisphere)
+    
+    # Define the WGS84 projection
+    wgs84_proj = pyproj.Proj(proj='latlong', datum='WGS84')
+    
+    # Perform the transformation
+    lon, lat = pyproj.transform(utm_proj, wgs84_proj, easting, northing)
+    
+    return lat, lon
