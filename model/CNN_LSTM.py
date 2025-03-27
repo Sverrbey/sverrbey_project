@@ -16,7 +16,7 @@ class CNN_LSTM_Model(nn.Module):
         )
         
         # LSTM layers to model temporal dependencies
-        self.lstm = nn.LSTM(32 * (46 // 4) * (29 // 4), hidden_size, num_layers, batch_first=True, dropout=dropout)
+        self.lstm = nn.LSTM(32 * (43 // 4) * (30 // 4), hidden_size, num_layers, batch_first=True, dropout=dropout)
         
         # Fully connected layer for final output
         self.fc = nn.Linear(hidden_size, output_size)

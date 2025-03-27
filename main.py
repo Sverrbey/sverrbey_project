@@ -23,16 +23,12 @@ needs to be specified in the code.
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
-import xml.etree.ElementTree as ET
 import matplotlib.pyplot as plt
 
 import torch
-import torch.nn as nn
-import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
-import xml.etree.ElementTree as ET
 import matplotlib.pyplot as plt
 
 from model.HBV import HBV_Model
@@ -71,6 +67,7 @@ def main ():
     disch_points = {    '6': (94683,6894729),
                         '5': (74334,6893688)}
     
+    """
     df = pd.read_csv('src/data/Stryn/DailyPrec_Stryn.txt', skiprows=7, encoding='latin1', delimiter='\t')
     df = df.drop([0, 1]).reset_index(drop=True)
     df_discharge = pd.read_csv('src/data/Stryn/DailyDisch_Stryn.txt', skiprows=3, encoding='latin1', delimiter='\t')
@@ -103,18 +100,22 @@ def main ():
                     '10': df_temp[['10']][0:number_days].to_numpy().flatten()}
 
     dates = df['Point ID'][0:number_days].to_numpy().flatten()
-
+    
     perc_file_path = 'src/data/interpolated_spatial_data/perc_spatial.json'
     disch_file_path = 'src/data/interpolated_spatial_data/discharge.json'
     temp_file_path = 'src/data/interpolated_spatial_data/temp.json'
-
     elevation_tiff_path = 'src/data/Stryn/Elevation.tif'
 
     # Check if the files exist
     if not os.path.exists(perc_file_path) or not os.path.exists(disch_file_path)or not os.path.exists(temp_file_path):
         # Generate the grid using IDW
         reformat_data(perc_points, perc_values, temp_values, disch_points, disch_values, number_days, dates, perc_file_path, disch_file_path,temp_file_path, extent=extent, spacing=spacing, power=2)
-    
+    """
+
+    perc_file_path = 'src/data/interpolated_spatial_data/perc_spatial.json'
+    disch_file_path = 'src/data/interpolated_spatial_data/discharge.json'
+    temp_file_path = 'src/data/interpolated_spatial_data/temp.json'
+    elevation_tiff_path = 'src/data/Stryn/Elevation.tif'
 
     df_perc = pd.read_json(perc_file_path, orient='values')
     df_disch = pd.read_json(disch_file_path, orient='values')
@@ -155,8 +156,8 @@ def main ():
     model = LSTM_Model(input_size=input_size, hidden_size=hidden_size, output_size=output_size, num_layers=num_layers, dropout=dropout)
     """
 
-    batch_size = 8
-    seq_length = 10
+    batch_size = 8*2
+    seq_length = 5 # days
     input_channels = 3  # Number of input channels (precipitation, temperature, elevation)
     hidden_size = 128
     output_size = y_data.shape[1]  # Number of target features
@@ -167,14 +168,14 @@ def main ():
 
 
     # Train the model
-    #model = train_model(model, train_dataloader, test_dataloader, 'CNN_LSTM_1', seq_length=seq_length)
+    model = train_model(model, train_dataloader, test_dataloader, 'CNN_LSTM_1', seq_length=seq_length)
     
     # Load the saved model state dict
     #model.load_state_dict(torch.load('/Users/SverreB/Github_Repo/sverrbey_project/model/save/CNN_LSTM_1.pth'))
 
     # Plot predictions vs actuals
-    #plot_predictions_vs_actuals(model, test_dataloader, scaler_y)
-
+    plot_predictions_vs_actuals(model, test_dataloader, scaler_y)
+    
 
  
 def preprocess_data(x_data, temp_data, elev_data, y_data, seq_length, batch_size, train_split=0.8):
@@ -367,7 +368,7 @@ def train_test_split_tensor(X, y, test_size=0.2):
     
     return X_train, X_test, y_train, y_test
 
-def train_model(model, train_dataloader, test_dataloader, name, seq_length=10, num_epochs=500, learning_rate=0.001):
+def train_model(model, train_dataloader, test_dataloader, name, seq_length=10, num_epochs=100, learning_rate=0.001):
     """
     Train the CNN_LSTM model.
 
