@@ -45,10 +45,11 @@ def main ():
     
     """ Parameters for the LSTM model """
     # Define the extent of the area and the spacing between grid points
-    #x_limit     = (  55000,  100000) 
-    #y_limit     = (6877000, 6905000) 
-    x_limit     = (65387.0, 107637.0) # [UTM-33n]
-    y_limit     = (6873697.0, 6902697.0)# [UTM-33n]
+    x_limit     = (  55000,  100000) 
+    y_limit     = (6877000, 6905000) 
+    #x_limit     = (65387.0, 107637.0) # [UTM-33n]
+
+    #y_limit     = (6873697.0, 6902697.0)# [UTM-33n]
 
     extent      = (x_limit[0], x_limit[1], y_limit[0], y_limit[1])  # Left, right, bottom, top
     spacing     = 1000  # Spacing between grid points (e.g., 100 m)
@@ -67,12 +68,12 @@ def main ():
     disch_points = {    '6': (94683,6894729),
                         '5': (74334,6893688)}
     
-    """
-    df = pd.read_csv('src/data/Stryn/DailyPrec_Stryn.txt', skiprows=7, encoding='latin1', delimiter='\t')
+    
+    df = pd.read_csv('data/Stryn/DailyPrec_Stryn.txt', skiprows=7, encoding='latin1', delimiter='\t')
     df = df.drop([0, 1]).reset_index(drop=True)
-    df_discharge = pd.read_csv('src/data/Stryn/DailyDisch_Stryn.txt', skiprows=3, encoding='latin1', delimiter='\t')
+    df_discharge = pd.read_csv('data/Stryn/DailyDisch_Stryn.txt', skiprows=3, encoding='latin1', delimiter='\t')
     df_discharge = df_discharge.drop([0, 1, 2, 3, 4, 5]).reset_index(drop=True)
-    df_temp = pd.read_csv('src/data/Stryn/DailyTemp_Stryn.txt', skiprows=7, encoding='latin1', delimiter='\t')
+    df_temp = pd.read_csv('data/Stryn/DailyTemp_Stryn.txt', skiprows=7, encoding='latin1', delimiter='\t')
     df_temp = df.drop([0, 1]).reset_index(drop=True)
     
     perc_values = { '1': df[['1']][0:number_days].to_numpy().flatten(),
@@ -101,21 +102,16 @@ def main ():
 
     dates = df['Point ID'][0:number_days].to_numpy().flatten()
     
-    perc_file_path = 'src/data/interpolated_spatial_data/perc_spatial.json'
-    disch_file_path = 'src/data/interpolated_spatial_data/discharge.json'
-    temp_file_path = 'src/data/interpolated_spatial_data/temp.json'
-    elevation_tiff_path = 'src/data/Stryn/Elevation.tif'
+    perc_file_path = 'data/interpolated_spatial_data/perc_spatial.json'
+    disch_file_path = 'data/interpolated_spatial_data/discharge.json'
+    temp_file_path = 'data/interpolated_spatial_data/temp.json'
+    elevation_tiff_path = 'data/Stryn/Elevation.tif'
 
     # Check if the files exist
     if not os.path.exists(perc_file_path) or not os.path.exists(disch_file_path)or not os.path.exists(temp_file_path):
         # Generate the grid using IDW
         reformat_data(perc_points, perc_values, temp_values, disch_points, disch_values, number_days, dates, perc_file_path, disch_file_path,temp_file_path, extent=extent, spacing=spacing, power=2)
-    """
-
-    perc_file_path = 'data/interpolated_spatial_data/perc_spatial.json'
-    disch_file_path = 'data/interpolated_spatial_data/discharge.json'
-    temp_file_path = 'data/interpolated_spatial_data/temp.json'
-    elevation_tiff_path = 'data/Stryn/Elevation.tif'
+    
 
     df_perc = pd.read_json(perc_file_path, orient='values')
     df_disch = pd.read_json(disch_file_path, orient='values')
@@ -125,19 +121,37 @@ def main ():
     df_disch.columns = ["Date", "discharge"]
     df_temp.columns = ["Date", "interpolated_temp"]
     
-    """ Plotting the interpolated percipitation pattern """
-    grid_list = df_perc['interpolated_perc'].to_list()
-    day = 8 
-    plot_perc(grid_list, day, perc_points, disch_points, extent)
-    
+    """ Plotting the interpolated percipitation pattern 
+    grid_perc = df_perc['interpolated_perc'].to_list()
+    grid_temp = df_temp['interpolated_temp'].to_list()
 
+    day = 8 
+    plot_interpolation(grid_perc, day, perc_points, disch_points, extent)
+    plot_interpolation(grid_temp, day, perc_points, disch_points, extent)
+    """
 
     # Assuming x_data and y_data are your input and target data
     x_data = np.array(df_perc['interpolated_perc'].tolist())
     temp_data = np.array(df_temp['interpolated_temp'].tolist())
     y_data = np.array(df_disch['discharge'].tolist())
+    
+    # Mask rows where any feature in y_data is equal to -99.0
+    valid_indices = ~np.any(y_data == -99.0, axis=1)  # Keep rows where no feature is -99.0
+
+    y_data = y_data[valid_indices]
+    x_data = x_data[valid_indices]
+    temp_data = temp_data[valid_indices]
+    
+
+    # Replace NaN values in y_data with 0
+    #y_data = np.nan_to_num(y_data, nan=0.0001)
+    
+    # Extract the second column and keep it as 2D
+    y_data = y_data[:, [1]]  # Shape: (num_samples, 1)   
+
     x_data_shape = x_data.shape[1:3]   
     elev_data = reformat_elevation_map(elevation_tiff_path, x_data_shape)
+    
 
     """
     x_data = x_data.reshape(x_data.shape[0], 46*29)
@@ -160,23 +174,26 @@ def main ():
     seq_length = 5 # days
     input_channels = 2  # Number of input channels (precipitation, temperature, elevation)
     hidden_size = 128
-    output_size = y_data.shape[1]  # Number of target features
-
-    model = CNN_LSTM_Model(input_channels, hidden_size, output_size, num_layers=2, dropout=0.3)
+    output_size = 1  # Number of target features
+    
+    lstm_shape = x_data.shape[1:3]
+    model = CNN_LSTM_Model(input_channels, hidden_size, output_size, lstm_shape, num_layers=2, dropout=0.3)
     
     train_dataloader, test_dataloader, scaler_x, scaler_y  = preprocess_data(x_data, temp_data, y_data, seq_length, batch_size)
 
+    # Load the saved model state dict
+    #model.load_state_dict(torch.load('/Users/SverreB/Github_Repo/sverrbey_project/model/save/CNN_LSTM_1.pth'))
+
     # Train the model
-    #model = train_model(model, train_dataloader, test_dataloader, 'CNN_LSTM_1', seq_length=seq_length)
+    #model = train_model(model, train_dataloader, test_dataloader, 'CNN_LSTM_2', scaler_y, scaler_x, seq_length=seq_length)
     
     # Load the saved model state dict
-    model.load_state_dict(torch.load('/Users/SverreB/Github_Repo/sverrbey_project/model/save/CNN_LSTM_1.pth'))
+    model.load_state_dict(torch.load('/Users/SverreB/Github_Repo/sverrbey_project/model/save/CNN_LSTM_2.pth'))
 
     # Plot predictions vs actuals
     plot_predictions_vs_actuals(model, test_dataloader, scaler_y)
     
 
- 
 def preprocess_data(x_data, temp_data, y_data, seq_length, batch_size, train_split=0.8):
     """
     Preprocess the data to include additional channels for temperature and elevation.
@@ -184,7 +201,6 @@ def preprocess_data(x_data, temp_data, y_data, seq_length, batch_size, train_spl
     Args:
         x_data: Precipitation data (shape: [num_samples, height, width]).
         temp_data: Temperature data (shape: [num_samples, height, width]).
-        elev_data: Elevation data (shape: [height, width]).
         y_data: Target data (shape: [num_samples, num_targets]).
         seq_length: Sequence length for LSTM.
         batch_size: Batch size for DataLoader.
@@ -204,22 +220,18 @@ def preprocess_data(x_data, temp_data, y_data, seq_length, batch_size, train_spl
 
     # Initialize scalers
     scaler_x = MinMaxScaler()
-    # Fit the scaler only on valid rows
     scaler_y = MinMaxScaler()
-
-    # Mask rows where any feature in y_data is equal to -99.0
-    valid_indices = ~np.any(y_data == -99.0, axis=1)  # Keep rows where no feature is -99.0
-    
+     
     # Fit scalers on the training portion of the data
     split_index = int(train_split * num_samples)
     scaler_x.fit(combined_data[:split_index])
-    scaler_y.fit(y_data[valid_indices][:split_index])  # Fit only on valid rows
-    
+    scaler_y.fit(y_data[:split_index])  # Fit only on valid rows
+
     # Transform the data
     combined_data_normalized = scaler_x.transform(combined_data)  # Shape: (num_samples, height * width * 3)
     
     y_data_normalized = scaler_y.transform(y_data)               # Shape: (num_samples, num_targets)
-    
+
     # Reshape combined_data back to 3D (spatial dimensions restored)
     combined_data_normalized = combined_data_normalized.reshape(num_samples, 2, height, width)  # 2 channels: precipitation, temperature
 
@@ -261,7 +273,6 @@ def plot_predictions_vs_actuals(model, dataloader, scaler_y):
         for batch_x, batch_y in dataloader:
             outputs = model(batch_x)
             predictions.append(outputs.cpu().numpy())
-            
             actuals.append(batch_y.cpu().numpy())
     
     # Concatenate predictions and actuals along the first axis
@@ -276,6 +287,7 @@ def plot_predictions_vs_actuals(model, dataloader, scaler_y):
     predictions = scaler_y.inverse_transform(predictions)
     actuals = scaler_y.inverse_transform(actuals)
     
+    
     # Plot the predictions vs actuals
     plt.figure(figsize=(10, 6))
     plt.plot(actuals[:, 0], label='Actual Data (Feature 1)')
@@ -283,87 +295,14 @@ def plot_predictions_vs_actuals(model, dataloader, scaler_y):
     if actuals.shape[1] > 1:  # If there are multiple target features
         plt.plot(actuals[:, 1], label='Actual Data (Feature 2)')
         plt.plot(predictions[:, 1], label='Predicted Data (Feature 2)', linestyle='--')
+
     plt.xlabel('Time Step')
     plt.ylabel('Value')
     plt.title('Model Predictions vs Actual Data')
     plt.legend()
     plt.show()
-
-def create_sequences(input_data, target_data, seq_length):
-    xs, ys = [], []
-    for i in range(len(input_data) - seq_length):
-        x = input_data[i:i+seq_length]
-        y = target_data[i+seq_length]
-        ys.append(y)
-        xs.append(x)
- 
-    return torch.stack(xs), torch.stack(ys)
-
-def preprocess_data_v1(x_data, y_data, seq_length, train_split=0.8):
-    # Generate sin(x) feature
-    sin_x_data = np.sin(x_data)
-
-    # Combine x, y, and sin(x) into a single input tensor
-    combined_data = np.concatenate((x_data, y_data, sin_x_data), axis=1)
-
-    # Initialize scalers
-    scaler = MinMaxScaler()
-
-    # Fit scaler on the training data
-    split_index = int(train_split * len(combined_data))
-    scaler.fit(combined_data[:split_index])
-
-    # Transform the data
-    combined_data = scaler.transform(combined_data)
-
-    # Convert to PyTorch tensors
-    combined_data_tensor = torch.tensor(combined_data, dtype=torch.float32)
-    y_data_tensor = torch.tensor(y_data, dtype=torch.float32)
-
-    X, y = create_sequences(combined_data_tensor, y_data_tensor, seq_length)
     
-    # Ensure the sequences have matching lengths
-    min_length = min(int(len(X)), len(y))
-    X, y = X[:min_length], y[:min_length]
-
-    # Creating the training and test sets
-    split_index = int(train_split * len(X))
-    X_train, X_test = X[:split_index], X[split_index:]
-    y_train, y_test = y[:split_index], y[split_index:]
-    
-    # Ensure the input tensor has the correct shape [batch_size, sequence_length, input_size]
-    X_train_tensor = X_train.view(-1, seq_length, X_train.shape[-1])
-    y_train_tensor = y_train.view(-1, y_train.shape[-1])
-    X_test_tensor = X_test.view(-1, seq_length, X_test.shape[-1])
-    y_test_tensor = y_test.view(-1, y_test.shape[-1])
-    
-    # Create DataLoaders
-    train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
-    test_dataset = TensorDataset(X_test_tensor, y_test_tensor)
-    train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False)
-    
-    return train_dataloader, test_dataloader, scaler
-    
-def train_test_split_tensor(X, y, test_size=0.2):
-    """Function to split data into training and test sets"""
-    # Calculate the number of test samples
-    num_samples = X.size(0)
-    num_test_samples = int(num_samples * test_size)
-    
-    # Shuffle the data
-    indices = torch.randperm(num_samples)
-    
-    # Split the data
-    test_indices = indices[:num_test_samples]
-    train_indices = indices[num_test_samples:]
-    
-    X_train, y_train = X[train_indices], y[train_indices]
-    X_test, y_test = X[test_indices], y[test_indices]
-    
-    return X_train, X_test, y_train, y_test
-
-def train_model(model, train_dataloader, test_dataloader, name, seq_length=10, num_epochs=100, learning_rate=0.001):
+def train_model(model, train_dataloader, test_dataloader, name, scaler_y, scaler_x, seq_length=10, num_epochs=100, learning_rate=0.001):
     """
     Train the CNN_LSTM model.
 
@@ -380,17 +319,18 @@ def train_model(model, train_dataloader, test_dataloader, name, seq_length=10, n
         model: The trained model.
     """
     # Define the loss function and optimizer
-    criterion = MaskedMSELoss(ignore_value=-0.7523467)  # Mean Squared Error Loss
+    criterion = torch.nn.MSELoss()  # Mean Squared Error Loss
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     # Learning rate scheduler
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, verbose=True)
+    #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
     # Training loop
-    best_loss = float('inf')
+    #best_loss = float('inf')
     for epoch in range(num_epochs):
         model.train()
         train_loss = 0.0
+        train_nse = 0.0
 
         for batch_x, batch_y in train_dataloader:
             # Forward pass
@@ -404,76 +344,51 @@ def train_model(model, train_dataloader, test_dataloader, name, seq_length=10, n
 
             train_loss += loss.item()
 
+            # Denormalize the predictions and true values
+            y_true = scaler_y.inverse_transform(batch_y.detach().cpu().numpy())
+            y_pred = scaler_y.inverse_transform(outputs.detach().cpu().numpy())
+
+            # Calculate NSE in the original scale
+            numerator = np.sum((y_true - y_pred) ** 2)
+            denominator = np.sum((y_true - np.mean(y_true)) ** 2)
+            batch_nse = 1 - (numerator / denominator if denominator != 0 else 0)
+            train_nse += batch_nse
+
         train_loss /= len(train_dataloader)
+        train_nse /= len(train_dataloader)
 
         # Validation loop
         model.eval()
         test_loss = 0.0
+        test_nse = 0.0
         with torch.no_grad():
             for batch_x, batch_y in test_dataloader:
                 outputs = model(batch_x)
                 loss = criterion(outputs, batch_y)
                 test_loss += loss.item()
 
+                # Denormalize the predictions and true values
+                y_true = scaler_y.inverse_transform(batch_y.detach().cpu().numpy())
+                y_pred = scaler_y.inverse_transform(outputs.detach().cpu().numpy())
+
+                # Calculate NSE in the original scale
+                numerator = np.sum((y_true - y_pred) ** 2)
+                denominator = np.sum((y_true - np.mean(y_true)) ** 2)
+                batch_nse = 1 - (numerator / denominator if denominator != 0 else 0)
+                test_nse += batch_nse
+
         test_loss /= len(test_dataloader)
+        test_nse /= len(test_dataloader)
 
         # Print epoch results
-        print(f"Epoch [{epoch+1}/{num_epochs}], Train Loss: {train_loss:.4f}, Test Loss: {test_loss:.4f}")
-
-        # Learning rate scheduling
-        scheduler.step(test_loss)
-
-        # Save the best model
-        if test_loss < best_loss:
-            best_loss = test_loss
-            torch.save(model.state_dict(), f'/Users/SverreB/Github_Repo/sverrbey_project/model/save/{name}.pth')
-            print(f"Model saved with Test Loss: {test_loss:.4f}")
-
-    return model
-
-def train_model_v1(model, train_dataloader, test_dataloader, name, seq_length=2):
-    criterion = MaskedMSELoss(ignore_value=-99)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-
-    # Learning rate scheduler
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, verbose=True)
-
-    # Training loop with early stopping and learning rate scheduling
-    num_epochs = 100
-
-    for epoch in range(num_epochs):
-        model.train()
-        for batch_x, batch_y in train_dataloader:
-            # Ensure batch_x has the correct shape [batch_size, sequence_length, input_size]
-            batch_x = batch_x.view(batch_x.size(0), seq_length, -1)
-            outputs = model(batch_x)
-            loss = criterion(outputs, batch_y)  # Ensure the target shape matches the model's output
-
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-        # Evaluate on the test set
-        model.eval()
-        test_loss = 0
-        with torch.no_grad():
-            for batch_x, batch_y in test_dataloader:
-                outputs = model(batch_x)
-                loss = criterion(outputs, batch_y)
-                test_loss += loss.item()
-
-        test_loss /= len(test_dataloader)
-        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}, Test Loss: {test_loss:.4f}')
-
-        # Learning rate scheduling
-        scheduler.step(test_loss)
-
-    # Save the model
+        print(f"Epoch [{epoch+1}/{num_epochs}], Train Loss: {train_loss:.4f}, Train NSE: {train_nse:.4f}, Test Loss: {test_loss:.4f}, Test NSE: {test_nse:.4f}")
+    #Saving the model
     torch.save(model.state_dict(), '/Users/SverreB/Github_Repo/sverrbey_project/model/save/' + name +'.pth')
 
     return model
 
-def plot_perc(grid_list, day, perc_points, disch_points, extent):
+def plot_interpolation(grid_list, day, perc_points, disch_points, extent):
+
     # Plot the interpolated grid for the first time step
     plt.rcParams["figure.figsize"] = (20, 7)
     grid_plot = grid_list[day-1]
