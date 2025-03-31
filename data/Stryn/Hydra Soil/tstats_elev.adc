@@ -1,0 +1,29 @@
+file format : IDRISI Values A.1
+file title  : 
+file type   : ascii
+records     : 9
+fields      : 2
+field 0     : IDR_ID
+data type   : integer
+format      : 0
+min. value  : 1
+max. value  : 17
+display min : 1
+display max : 17
+value units : none
+value error : none
+flag value  : none
+flag def'n  : na
+legend cats : 0
+field 1     : tstats_elev
+data type   : real
+format      : 0
+min. value  : -99
+max. value  : -99
+display min : -99
+display max : -99
+value units : 
+value error : 0
+flag value  : -99
+flag def'n  : 
+legend cats : 0

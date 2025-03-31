@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PARAMETERS name="Coordinate Reference System Picker">
+  <OPTION type="long_text" id="CRS_PROJ4" name="Proj4 Parameters">+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs </OPTION>
+  <PARAMETERS name="User Defined" id="CRS_DIALOG" type="parameters">
+    <OPTION type="choice" id="PROJ_TYPE" name="Projection Type" parms="CRS_DIALOG" index="138">Universal Transverse Mercator (UTM)</OPTION>
+    <OPTION type="choice" id="DATUM_DEF" name="Datum Definition" parms="CRS_DIALOG" index="1">User Defined Datum</OPTION>
+    <OPTION type="choice" id="DATUM" name="Predefined Datum" parms="CRS_DIALOG" index="0">WGS84</OPTION>
+    <OPTION type="choice" id="ELLIPSOID" name="Ellipsoid Definition" parms="CRS_DIALOG" index="0">Predefined Ellipsoids</OPTION>
+    <OPTION type="choice" id="ELLPS_DEF" name="Predefined Ellipsoids" parms="CRS_DIALOG" index="2">GRS 1980(IUGG, 1980) (a=6378137.0, rf=298.257222101)</OPTION>
+    <OPTION type="double" id="ELLPS_A" name="Semimajor Axis (a)" parms="CRS_DIALOG">6378137.000000</OPTION>
+    <OPTION type="double" id="ELLPS_B" name="Semiminor Axis (b)" parms="CRS_DIALOG">6356752.314000</OPTION>
+    <OPTION type="double" id="ELLPS_F" name="Flattening (f)" parms="CRS_DIALOG">0.003353</OPTION>
+    <OPTION type="double" id="ELLPS_RF" name="Reciprocal Flattening (rf)" parms="CRS_DIALOG">298.257220</OPTION>
+    <OPTION type="double" id="ELLPS_E" name="Eccentricity (e)" parms="CRS_DIALOG">9004939.287542</OPTION>
+    <OPTION type="double" id="ELLPS_ES" name="Squared Eccentricity (es)" parms="CRS_DIALOG">81088931572313.359375</OPTION>
+    <OPTION type="choice" id="DATUM_SHIFT" name="Datum Shift" parms="CRS_DIALOG" index="1">3 parameters (translation only)</OPTION>
+    <OPTION type="double" id="DS_DX" name="Translation X" parms="CRS_DIALOG">0.000000</OPTION>
+    <OPTION type="double" id="DS_DY" name="Translation Y" parms="CRS_DIALOG">0.000000</OPTION>
+    <OPTION type="double" id="DS_DZ" name="Translation Z" parms="CRS_DIALOG">0.000000</OPTION>
+    <OPTION type="double" id="DS_RX" name="Rotation X" parms="CRS_DIALOG">0.000000</OPTION>
+    <OPTION type="double" id="DS_RY" name="Rotation Y" parms="CRS_DIALOG">0.000000</OPTION>
+    <OPTION type="double" id="DS_RZ" name="Rotation Z" parms="CRS_DIALOG">0.000000</OPTION>
+    <OPTION type="double" id="DS_SC" name="Scaling" parms="CRS_DIALOG">0.000000</OPTION>
+    <OPTION type="file" id="DATUM_GRID" name="Datum Shift Grid File" parms="CRS_DIALOG"/>
+    <OPTION type="double" id="LON_0" name="Central Meridian" parms="CRS_DIALOG">0.000000</OPTION>
+    <OPTION type="double" id="LAT_0" name="Central Parallel" parms="CRS_DIALOG">0.000000</OPTION>
+    <OPTION type="double" id="X_0" name="False Easting" parms="CRS_DIALOG">0.000000</OPTION>
+    <OPTION type="double" id="Y_0" name="False Northing" parms="CRS_DIALOG">0.000000</OPTION>
+    <OPTION type="double" id="K_0" name="Scale Factor" parms="CRS_DIALOG">1.000000</OPTION>
+    <OPTION type="choice" id="UNIT" name="Unit" parms="CRS_DIALOG" index="1">Meter (1)</OPTION>
+    <OPTION type="boolean" id="NO_DEFS" name="Ignore Defaults" parms="CRS_DIALOG">TRUE</OPTION>
+    <OPTION type="boolean" id="OVER" name="Allow longitudes outside -180 to 180 Range" parms="CRS_DIALOG">FALSE</OPTION>
+    <PARAMETERS name="Universal Transverse Mercator (UTM)" id="OPTIONS" type="parameters">
+      <OPTION type="integer" id="zone" name="Zone" parms="utm">33</OPTION>
+      <OPTION type="boolean" id="south" name="South" parms="utm">FALSE</OPTION>
+    </PARAMETERS>
+  </PARAMETERS>
+  <PARAMETERS name="Loaded Grid" id="CRS_GRID" type="parameters">
+    <OPTION type="grid_system" id="PICK_GRIDSYSTEM" name="Grid system" parms="CRS_GRID">
+      <CELLSIZE>0</CELLSIZE>
+      <XMIN>0</XMIN>
+      <XMAX>0</XMAX>
+      <YMIN>0</YMIN>
+      <YMAX>0</YMAX>
+    </OPTION>
+    <DATA type="grid" id="PICK" name="Grid" parms="CRS_GRID">NOT SET</DATA>
+  </PARAMETERS>
+  <PARAMETERS name="Loaded Shapes" id="CRS_SHAPES" type="parameters">
+    <DATA type="shapes" id="PICK" name="Shapes" parms="CRS_SHAPES">NOT SET</DATA>
+  </PARAMETERS>
+  <OPTION type="file" id="CRS_FILE" name="Well Known Text File"/>
+  <OPTION type="integer" id="CRS_EPSG" name="EPSG Code">25833</OPTION>
+  <OPTION type="choice" id="CRS_EPSG_GEOGCS" name="Geographic Coordinate Systems" index="85">ETRS89</OPTION>
+  <OPTION type="choice" id="CRS_EPSG_PROJCS" name="Projected Coordinate Systems" index="447">ETRS89 / UTM zone 33N</OPTION>
+  <OPTION type="boolean" id="PRECISE" name="Precise Datum Conversion">FALSE</OPTION>
+</PARAMETERS>

@@ -1,0 +1,30 @@
+file format : IDRISI Values A.1
+file title  : 
+file type   : ascii
+records     : 4
+fields      : 2
+field 0     : IDR_ID
+data type   : integer
+format      : 0
+min. value  : 22
+max. value  : 25
+display min : 22
+display max : 25
+value units : none
+value error : none
+flag value  : none
+flag def'n  : na
+legend cats : 0
+field 1     : Rstats
+data type   : real
+format      : 0
+min. value  : 91.05
+max. value  : 209.908
+display min : 91.05
+display max : 209.908
+value units : 
+value error : 0
+flag value  : -99
+flag def'n  : 
+legend cats : 0
+lineage     : timestamp: 2021-08-31 00:00

@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+*.sqlite3
+*.env
+*.DS_Store
+*.ipynb_checkpoints/
+model/save/
+src/data/interpolated_spatial_data/*.json
+src/data/Stryn/*.tif

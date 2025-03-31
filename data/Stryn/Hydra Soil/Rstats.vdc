@@ -1,0 +1,24 @@
+file format : Idrisi Vector A.1
+file title  : 
+id type     : real
+file type   : binary
+object type : point
+ref. system : utm-33n
+ref. units  : m
+unit dist.  : 1
+min. X      : 36019
+max. X      : 149452
+min. Y      : 6.81489e+006
+max. Y      : 6.93055e+006
+pos'n error : 0
+resolution  : 0
+min. value  : 22
+max. value  : 25
+display min : 22
+display max : 25
+value units : 
+value error : 0
+flag value  : -99
+flag def'n  : 
+legend cats : 0
+lineage     : timestamp: 2021-08-31 00:00

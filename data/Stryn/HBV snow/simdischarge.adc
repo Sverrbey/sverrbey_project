@@ -1,0 +1,30 @@
+file format : IDRISI Values A.1
+file title  : 
+file type   : ascii
+records     : 2
+fields      : 2
+field 0     : IDR_ID
+data type   : integer
+format      : 0
+min. value  : 5
+max. value  : 6
+display min : 5
+display max : 6
+value units : none
+value error : none
+flag value  : none
+flag def'n  : na
+legend cats : 0
+field 1     : SimDischarge
+data type   : real
+format      : 0
+min. value  : 0
+max. value  : 0
+display min : 0
+display max : 0
+value units : 
+value error : 0
+flag value  : -99
+flag def'n  : 
+legend cats : 0
+lineage     : timestamp: 2020-12-31 00:00
