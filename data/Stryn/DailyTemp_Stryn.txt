@@ -1,7 +1,7 @@
 Xcoord	57485	94493	83571	74334	94683	74031	78934	89560	77580
 Ycoord	6893688	6894359	6889543	6893688	6894729	6885089	6900441	6897378	6889281
 network	tstats	tstats	tstats	tstats	tstats	tstats	tstats	tstats	tstats
-name	Stryn-Kroken	RV15 Skjæeringsdalen	RV15 Fosnes	Strynsvatn	Grasdøla	Lovatn	Ptdata5	Ptdata6	Ptdata7
+name	Stryn-Kroken	RV15 Skjï¿½eringsdalen	RV15 Fosnes	Strynsvatn	Grasdï¿½la	Lovatn	Ptdata5	Ptdata6	Ptdata7
 STNR	58900	58703	58670	88.11.0	88.15.0	88.4.0			
 HOH	199	585	34	29	585	176	789	784	1150
 RefSystem	utm-33n	utm-33n	utm-33n	utm-33n	utm-33n	utm-33n	utm-33n	utm-33n	utm-33n

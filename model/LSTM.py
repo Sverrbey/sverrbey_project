@@ -1,57 +1,39 @@
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
-import numpy as np
-import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
-import xml.etree.ElementTree as ET
-import matplotlib.pyplot as plt
 
-import torch
-import torch.nn as nn
-
-class LSTM_Model(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, num_layers=3, dropout=0.3):
-        super(LSTM_Model, self).__init__()
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True, dropout=dropout, bidirectional=True)
+class LSTM(nn.Module):
+    def __init__(self, input_channels, height, width, hidden_size, output_size, num_layers=1, dropout=0.3):
+        super(LSTM, self).__init__()
         
-       # Using nn.Sequential to create non-linear containers
-        self.fc_layers = nn.Sequential(
-            nn.Linear(hidden_size * 2, hidden_size),  # Multiply by 2 for bidirectional
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(hidden_size, hidden_size // 2),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(hidden_size // 2, hidden_size // 4),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(hidden_size // 4, output_size)
+        # Flatten spatial dimensions (height * width) into a single feature vector
+        self.input_size = input_channels * height * width
+        
+        # LSTM layer
+        self.lstm = nn.LSTM(
+            input_size=self.input_size,  # Flattened input size
+            hidden_size=hidden_size,    # Number of hidden units
+            num_layers=num_layers,      # Number of LSTM layers
+            batch_first=True,           # Input shape: (batch_size, seq_length, input_size)
+            dropout=dropout             # Dropout for regularization
         )
-    
+        
+        # Fully connected layer for final output
+        self.fc = nn.Linear(hidden_size, output_size)
+
     def forward(self, x):
-        h_0 = torch.zeros(self.num_layers * 2, x.size(0), self.hidden_size).to(x.device)  # Multiply by 2 for bidirectional
-        c_0 = torch.zeros(self.num_layers * 2, x.size(0), self.hidden_size).to(x.device)  # Multiply by 2 for bidirectional
-        out, _ = self.lstm(x, (h_0, c_0))
-        out = self.fc_layers(out[:, -1, :])
-        return out.view(-1, 1, 2)  # Ensure the output shape matches the target shape
-
-class MaskedMSELoss(nn.Module):
-    def __init__(self, ignore_value=-99.0):
-        super(MaskedMSELoss, self).__init__()
-        self.ignore_value = ignore_value
-
-    def forward(self, predictions, targets):
-        # Create a mask for valid values (where targets are not equal to the ignore value)
-        mask = targets != self.ignore_value  # Shape: (batch_size, num_features)
-
-        # Apply the mask to the predictions and targets
-        masked_predictions = predictions[mask]
-        masked_targets = targets[mask]
-
-        # Compute the Mean Squared Error only on valid values
-        loss = nn.functional.mse_loss(masked_predictions, masked_targets, reduction='mean')
-        return loss
+        # Input shape: (batch_size, seq_length, channels, height, width)
+        batch_size, seq_length, channels, height, width = x.size()
+        
+        # Flatten spatial dimensions (channels, height, width) into a single feature vector
+        x = x.view(batch_size, seq_length, -1)  # Shape: (batch_size, seq_length, input_size)
+        
+        # Pass through LSTM
+        lstm_out, _ = self.lstm(x)  # Output shape: (batch_size, seq_length, hidden_size)
+        
+        # Take the output of the last time step
+        out = lstm_out[:, -1, :]  # Shape: (batch_size, hidden_size)
+        
+        # Pass through the fully connected layer
+        out = self.fc(out)  # Shape: (batch_size, output_size)
+        
+        return out
