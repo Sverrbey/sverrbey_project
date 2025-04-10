@@ -1,0 +1,26 @@
+file format : IDRISI Raster A.1
+file title  : Window from EnfoDEMkmNorden32 c: 275 r: 998 to c: 379 r: 1052
+data type   : integer
+file type   : binary
+columns     : 105
+rows        : 55
+ref. system : utm-32n
+ref. units  : m
+unit dist.  : 1.0000000
+min. X      : 540000.0000000
+max. X      : 645000.0000000
+min. Y      : 6945000.0000000
+max. Y      : 7000000.0000000
+pos'n error : unknown
+resolution  : 1000.0000000
+min. value  : 60
+max. value  : 1270
+display min : 60
+display max : 1270
+value units : m
+value error : unknown
+flag value  : -99
+flag def'n  : Missing data
+legend cats : 0
+lineage     : This file was created by the WINDOW module with the command line: 
+lineage     : J:\Prosjekt\Avd12\12X260_Hydrologisk_Kraftloft\Under_Arbeid\Data\EnfoDEMkmNorden32.rst*J:\Prosjekt\Avd12\12X667_OPP-MOD-TIL\Under arbeid\ENKI_demo\Gaula\ELEVATION.rst*2*540000*7000000*645000*6945000*0

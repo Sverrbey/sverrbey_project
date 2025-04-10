@@ -1,0 +1,779 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<!DOCTYPE boost_serialization>
+<boost_serialization signature="serialization::archive" version="10">
+<DefaultDllPath>C:\Devel_VS2010\ENKI\bin\</DefaultDllPath>
+<nMethodDlls>13</nMethodDlls>
+<MethodDllFile class_id="0" tracking_level="1" version="0" object_id="_0">
+	<DllFolder>C:\Devel_VS2010\ENKI\bin\</DllFolder>
+	<MethodName>ConstValue</MethodName>
+</MethodDllFile>
+<MethodDllFile class_id_reference="0" object_id="_1">
+	<DllFolder>C:\Devel_VS2010\ENKI\bin\</DllFolder>
+	<MethodName>IDWprec</MethodName>
+</MethodDllFile>
+<MethodDllFile class_id_reference="0" object_id="_2">
+	<DllFolder>C:\Devel_VS2010\ENKI\bin\</DllFolder>
+	<MethodName>BayesTkrig</MethodName>
+</MethodDllFile>
+<MethodDllFile class_id_reference="0" object_id="_3">
+	<DllFolder>C:\Devel_VS2010\ENKI\bin\</DllFolder>
+	<MethodName>PcorrMap2</MethodName>
+</MethodDllFile>
+<MethodDllFile class_id_reference="0" object_id="_4">
+	<DllFolder>C:\Devel_VS2010\ENKI\bin\</DllFolder>
+	<MethodName>HydraEP</MethodName>
+</MethodDllFile>
+<MethodDllFile class_id_reference="0" object_id="_5">
+	<DllFolder>C:\Devel_VS2010\ENKI\bin\</DllFolder>
+	<MethodName>HydraCanopy</MethodName>
+</MethodDllFile>
+<MethodDllFile class_id_reference="0" object_id="_6">
+	<DllFolder>C:\Devel_VS2010\ENKI\bin\</DllFolder>
+	<MethodName>GamSnow</MethodName>
+</MethodDllFile>
+<MethodDllFile class_id_reference="0" object_id="_7">
+	<DllFolder>C:\Devel_VS2010\ENKI\bin\</DllFolder>
+	<MethodName>SnowReflect</MethodName>
+</MethodDllFile>
+<MethodDllFile class_id_reference="0" object_id="_8">
+	<DllFolder>C:\Devel_VS2010\ENKI\bin\</DllFolder>
+	<MethodName>HydraSoil</MethodName>
+</MethodDllFile>
+<MethodDllFile class_id_reference="0" object_id="_9">
+	<DllFolder>C:\Devel_VS2010\ENKI\bin\</DllFolder>
+	<MethodName>HBVResponse</MethodName>
+</MethodDllFile>
+<MethodDllFile class_id_reference="0" object_id="_10">
+	<DllFolder>C:\Devel_VS2010\ENKI\bin\</DllFolder>
+	<MethodName>QSubcat</MethodName>
+</MethodDllFile>
+<MethodDllFile class_id_reference="0" object_id="_11">
+	<DllFolder>C:\Devel_VS2010\ENKI\bin\</DllFolder>
+	<MethodName>SimpleResponse</MethodName>
+</MethodDllFile>
+<MethodDllFile class_id_reference="0" object_id="_12">
+	<DllFolder>C:\Devel_VS2010\ENKI\bin\</DllFolder>
+	<MethodName>IDWrad</MethodName>
+</MethodDllFile>
+<ENKI_Model class_id="1" tracking_level="1" version="0" object_id="_13">
+	<ModelName>ExampleMod2</ModelName>
+	<NumRoutines>12</NumRoutines>
+	<RoutineName>IDWPrec</RoutineName>
+	<MethodName>IDWprec</MethodName>
+	<NumMethVars>7</NumMethVars>
+	<Methvar class_id="2" tracking_level="1" version="0" object_id="_14">
+		<MethvarID>StatElev</MethvarID>
+		<ConnectionName>pstats_elev</ConnectionName>
+		<DataType>network</DataType>
+	</Methvar>
+	<Methvar object_id="_15">
+		<MethvarID>LocalElev</MethvarID>
+		<ConnectionName>Elevation</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_16">
+		<MethvarID>ElevGrad</MethvarID>
+		<ConnectionName>PrecGrad</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_17">
+		<MethvarID>MaxIntDist</MethvarID>
+		<ConnectionName>MaxIntDist</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_18">
+		<MethvarID>MaxIntStats</MethvarID>
+		<ConnectionName>MaxIntStats</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_19">
+		<MethvarID>StatPrec</MethvarID>
+		<ConnectionName>pstats</ConnectionName>
+		<DataType>network</DataType>
+	</Methvar>
+	<Methvar object_id="_20">
+		<MethvarID>TargetValues</MethvarID>
+		<ConnectionName>RawGridPrec</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<RoutineName>BayesTkrig</RoutineName>
+	<MethodName>BayesTkrig</MethodName>
+	<NumMethVars>12</NumMethVars>
+	<Methvar object_id="_21">
+		<MethvarID>StatElev</MethvarID>
+		<ConnectionName>tstats_elev</ConnectionName>
+		<DataType>network</DataType>
+	</Methvar>
+	<Methvar object_id="_22">
+		<MethvarID>TargetElev</MethvarID>
+		<ConnectionName>Elevation</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_23">
+		<MethvarID>Nugget</MethvarID>
+		<ConnectionName>Tnugget</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_24">
+		<MethvarID>Sill</MethvarID>
+		<ConnectionName>Tsill</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_25">
+		<MethvarID>Range</MethvarID>
+		<ConnectionName>Trange</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_26">
+		<MethvarID>Zscale</MethvarID>
+		<ConnectionName>Tzscale</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_27">
+		<MethvarID>PriEtgrad</MethvarID>
+		<ConnectionName>(routine local)</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_28">
+		<MethvarID>PriSDtgrad</MethvarID>
+		<ConnectionName>PriSDtgrad</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_29">
+		<MethvarID>StatTemp</MethvarID>
+		<ConnectionName>tstats</ConnectionName>
+		<DataType>network</DataType>
+	</Methvar>
+	<Methvar object_id="_30">
+		<MethvarID>TargetTemp</MethvarID>
+		<ConnectionName>GridTemp</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_31">
+		<MethvarID>EmpEstTgrad</MethvarID>
+		<ConnectionName>EmpEstTgrad</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_32">
+		<MethvarID>PostEtgrad</MethvarID>
+		<ConnectionName>PostEtgrad</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<RoutineName>PcorrMap2</RoutineName>
+	<MethodName>PcorrMap2</MethodName>
+	<NumMethVars>6</NumMethVars>
+	<Methvar object_id="_33">
+		<MethvarID>TX</MethvarID>
+		<ConnectionName>TX</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_34">
+		<MethvarID>RainCorr</MethvarID>
+		<ConnectionName>PcorrRain</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_35">
+		<MethvarID>SnowCorr</MethvarID>
+		<ConnectionName>PcorrSnow</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_36">
+		<MethvarID>RawPrec</MethvarID>
+		<ConnectionName>RawGridPrec</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_37">
+		<MethvarID>Temp</MethvarID>
+		<ConnectionName>GridTemp</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_38">
+		<MethvarID>CorrPrec</MethvarID>
+		<ConnectionName>GridPrec</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<RoutineName>IDWHum</RoutineName>
+	<MethodName>IDWrad</MethodName>
+	<NumMethVars>5</NumMethVars>
+	<Methvar object_id="_39">
+		<MethvarID>TargetTopIndex</MethvarID>
+		<ConnectionName>ConstOne</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_40">
+		<MethvarID>MaxIntDist</MethvarID>
+		<ConnectionName>MaxIntDist</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_41">
+		<MethvarID>MaxIntStats</MethvarID>
+		<ConnectionName>MaxIntStats</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_42">
+		<MethvarID>StationValues</MethvarID>
+		<ConnectionName>Hstats</ConnectionName>
+		<DataType>network</DataType>
+	</Methvar>
+	<Methvar object_id="_43">
+		<MethvarID>TargetRad</MethvarID>
+		<ConnectionName>gridhum</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<RoutineName>IDWrad</RoutineName>
+	<MethodName>IDWrad</MethodName>
+	<NumMethVars>5</NumMethVars>
+	<Methvar object_id="_44">
+		<MethvarID>TargetTopIndex</MethvarID>
+		<ConnectionName>ConstOne</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_45">
+		<MethvarID>MaxIntDist</MethvarID>
+		<ConnectionName>MaxIntDist</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_46">
+		<MethvarID>MaxIntStats</MethvarID>
+		<ConnectionName>MaxIntStats</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_47">
+		<MethvarID>StationValues</MethvarID>
+		<ConnectionName>Rstats</ConnectionName>
+		<DataType>network</DataType>
+	</Methvar>
+	<Methvar object_id="_48">
+		<MethvarID>TargetRad</MethvarID>
+		<ConnectionName>GridRad</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<RoutineName>IDWWind</RoutineName>
+	<MethodName>IDWrad</MethodName>
+	<NumMethVars>5</NumMethVars>
+	<Methvar object_id="_49">
+		<MethvarID>TargetTopIndex</MethvarID>
+		<ConnectionName>ConstOne</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_50">
+		<MethvarID>MaxIntDist</MethvarID>
+		<ConnectionName>MaxIntDist</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_51">
+		<MethvarID>MaxIntStats</MethvarID>
+		<ConnectionName>MaxIntStats</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_52">
+		<MethvarID>StationValues</MethvarID>
+		<ConnectionName>Wstats</ConnectionName>
+		<DataType>network</DataType>
+	</Methvar>
+	<Methvar object_id="_53">
+		<MethvarID>TargetRad</MethvarID>
+		<ConnectionName>gridwind</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<RoutineName>HydraEP</RoutineName>
+	<MethodName>HydraEP</MethodName>
+	<NumMethVars>18</NumMethVars>
+	<Methvar object_id="_54">
+		<MethvarID>landuse</MethvarID>
+		<ConnectionName>landuse</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_55">
+		<MethvarID>veghgt</MethvarID>
+		<ConnectionName>GridVeghgt</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_56">
+		<MethvarID>tvlow</MethvarID>
+		<ConnectionName>tvlow</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_57">
+		<MethvarID>ehgt</MethvarID>
+		<ConnectionName>ehgt</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_58">
+		<MethvarID>etmp</MethvarID>
+		<ConnectionName>etmp</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_59">
+		<MethvarID>dveghgt</MethvarID>
+		<ConnectionName>dveghgt</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_60">
+		<MethvarID>tvsum</MethvarID>
+		<ConnectionName>tvsum</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_61">
+		<MethvarID>esnw</MethvarID>
+		<ConnectionName>esnw</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_62">
+		<MethvarID>ewnd</MethvarID>
+		<ConnectionName>ewnd</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_63">
+		<MethvarID>eprc</MethvarID>
+		<ConnectionName>eprc</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_64">
+		<MethvarID>epcorr</MethvarID>
+		<ConnectionName>epcorr</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_65">
+		<MethvarID>localprec</MethvarID>
+		<ConnectionName>GridPrec</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_66">
+		<MethvarID>localtemp</MethvarID>
+		<ConnectionName>GridTemp</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_67">
+		<MethvarID>localwind</MethvarID>
+		<ConnectionName>gridwind</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_68">
+		<MethvarID>acctmp</MethvarID>
+		<ConnectionName>acctemp</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_69">
+		<MethvarID>localepot</MethvarID>
+		<ConnectionName>GridEpot</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_70">
+		<MethvarID>LowLAI</MethvarID>
+		<ConnectionName>LowLAI</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_71">
+		<MethvarID>HighLAI</MethvarID>
+		<ConnectionName>HighLAI</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<RoutineName>HydraCanopy</RoutineName>
+	<MethodName>HydraCanopy</MethodName>
+	<NumMethVars>9</NumMethVars>
+	<Methvar object_id="_72">
+		<MethvarID>landuse</MethvarID>
+		<ConnectionName>landuse</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_73">
+		<MethvarID>vegcov</MethvarID>
+		<ConnectionName>vegcov</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_74">
+		<MethvarID>laicap</MethvarID>
+		<ConnectionName>laicap</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_75">
+		<MethvarID>localprec</MethvarID>
+		<ConnectionName>GridPrec</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_76">
+		<MethvarID>localepot</MethvarID>
+		<ConnectionName>GridEpot</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_77">
+		<MethvarID>HighLAI</MethvarID>
+		<ConnectionName>HighLAI</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_78">
+		<MethvarID>hInt</MethvarID>
+		<ConnectionName>hInt</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_79">
+		<MethvarID>actevaph</MethvarID>
+		<ConnectionName>actevaph</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_80">
+		<MethvarID>throughfall</MethvarID>
+		<ConnectionName>throughfall</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<RoutineName>GamSnow</RoutineName>
+	<MethodName>GamSnow</MethodName>
+	<NumMethVars>32</NumMethVars>
+	<Methvar object_id="_81">
+		<MethvarID>Land use</MethvarID>
+		<ConnectionName>landuse</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_82">
+		<MethvarID>Glaciers</MethvarID>
+		<ConnectionName>GLACIERS</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_83">
+		<MethvarID>Last winter day</MethvarID>
+		<ConnectionName>Lastwinterday</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_84">
+		<MethvarID>Init.bareground</MethvarID>
+		<ConnectionName>Inity</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_85">
+		<MethvarID>Snowdist CV</MethvarID>
+		<ConnectionName>SDC_CV</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_86">
+		<MethvarID>TX</MethvarID>
+		<ConnectionName>TX</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_87">
+		<MethvarID>WindScale</MethvarID>
+		<ConnectionName>Windscale</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_88">
+		<MethvarID>WindConst</MethvarID>
+		<ConnectionName>Windconst</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_89">
+		<MethvarID>Maximum LWC</MethvarID>
+		<ConnectionName>MaxLWC</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_90">
+		<MethvarID>Surface</MethvarID>
+		<ConnectionName>SurfaceLayer</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_91">
+		<MethvarID>Max albedo</MethvarID>
+		<ConnectionName>Maxalbedo</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_92">
+		<MethvarID>Min albedo</MethvarID>
+		<ConnectionName>Minalbedo</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_93">
+		<MethvarID>Fast decay rate</MethvarID>
+		<ConnectionName>FastDecayRate</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_94">
+		<MethvarID>Slow decay rate</MethvarID>
+		<ConnectionName>SlowDecayRate</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_95">
+		<MethvarID>Reset snow depth</MethvarID>
+		<ConnectionName>ResetSnowDepth</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_96">
+		<MethvarID>Glacier albedo</MethvarID>
+		<ConnectionName>GlacierAlb</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_97">
+		<MethvarID>Localtemp</MethvarID>
+		<ConnectionName>GridTemp</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_98">
+		<MethvarID>Glob_rad</MethvarID>
+		<ConnectionName>GridRad</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_99">
+		<MethvarID>Localprec</MethvarID>
+		<ConnectionName>throughfall</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_100">
+		<MethvarID>Windspeed</MethvarID>
+		<ConnectionName>gridwind</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_101">
+		<MethvarID>Rel. humidity</MethvarID>
+		<ConnectionName>gridhum</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_102">
+		<MethvarID>Albedo</MethvarID>
+		<ConnectionName>Albedo</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_103">
+		<MethvarID>LWC</MethvarID>
+		<ConnectionName>SnowLiqWatDepth</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_104">
+		<MethvarID>Surf_energy</MethvarID>
+		<ConnectionName>SurfEnergy</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_105">
+		<MethvarID>SDC shape state</MethvarID>
+		<ConnectionName>SDCShape</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_106">
+		<MethvarID>Initial storage</MethvarID>
+		<ConnectionName>SDC_M</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_107">
+		<MethvarID>Acc melt depth</MethvarID>
+		<ConnectionName>AccMeltDepth</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_108">
+		<MethvarID>IsoPotEnergy</MethvarID>
+		<ConnectionName>IsoPotEnergy</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_109">
+		<MethvarID>Temporary SWE</MethvarID>
+		<ConnectionName>TempSWE</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_110">
+		<MethvarID>Snow cover</MethvarID>
+		<ConnectionName>SCA</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_111">
+		<MethvarID>Snow storage</MethvarID>
+		<ConnectionName>SWE</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_112">
+		<MethvarID>Outflow</MethvarID>
+		<ConnectionName>GridSnowOut</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<RoutineName>HydraSoil</RoutineName>
+	<MethodName>HydraSoil</MethodName>
+	<NumMethVars>20</NumMethVars>
+	<Methvar object_id="_113">
+		<MethvarID>landuse</MethvarID>
+		<ConnectionName>landuse</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_114">
+		<MethvarID>vegcov</MethvarID>
+		<ConnectionName>vegcov</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_115">
+		<MethvarID>laicap</MethvarID>
+		<ConnectionName>laicap</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_116">
+		<MethvarID>beta</MethvarID>
+		<ConnectionName>BETA</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_117">
+		<MethvarID>lp</MethvarID>
+		<ConnectionName>LP</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_118">
+		<MethvarID>infcap</MethvarID>
+		<ConnectionName>infcap</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_119">
+		<MethvarID>fieldcap</MethvarID>
+		<ConnectionName>fieldcap</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_120">
+		<MethvarID>LowLAI</MethvarID>
+		<ConnectionName>LowLAI</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_121">
+		<MethvarID>HighLAI</MethvarID>
+		<ConnectionName>HighLAI</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_122">
+		<MethvarID>SnowOut</MethvarID>
+		<ConnectionName>GridSnowOut</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_123">
+		<MethvarID>localepot</MethvarID>
+		<ConnectionName>GridEpot</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_124">
+		<MethvarID>snwcov</MethvarID>
+		<ConnectionName>SCA</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_125">
+		<MethvarID>actevaph</MethvarID>
+		<ConnectionName>actevaph</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_126">
+		<MethvarID>solsatV</MethvarID>
+		<ConnectionName>solsatV</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_127">
+		<MethvarID>solsatU</MethvarID>
+		<ConnectionName>SolsatU</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_128">
+		<MethvarID>lInt</MethvarID>
+		<ConnectionName>Lint</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_129">
+		<MethvarID>ActEvap</MethvarID>
+		<ConnectionName>GridActEvap</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_130">
+		<MethvarID>SurfaceFlow</MethvarID>
+		<ConnectionName>SurfaceFlow</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_131">
+		<MethvarID>SoilFlow</MethvarID>
+		<ConnectionName>SoilFlow</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_132">
+		<MethvarID>SoilOut</MethvarID>
+		<ConnectionName>GridSoilOut</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<RoutineName>HBVResponse</RoutineName>
+	<MethodName>HBVResponse</MethodName>
+	<NumMethVars>14</NumMethVars>
+	<Methvar object_id="_133">
+		<MethvarID>k2</MethvarID>
+		<ConnectionName>k2</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_134">
+		<MethvarID>k1</MethvarID>
+		<ConnectionName>k1</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_135">
+		<MethvarID>k0</MethvarID>
+		<ConnectionName>k0</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_136">
+		<MethvarID>perc</MethvarID>
+		<ConnectionName>perc</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_137">
+		<MethvarID>tresh</MethvarID>
+		<ConnectionName>Rtreshold</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_138">
+		<MethvarID>lakep</MethvarID>
+		<ConnectionName>lakep</ConnectionName>
+		<DataType>scalar</DataType>
+	</Methvar>
+	<Methvar object_id="_139">
+		<MethvarID>inflow</MethvarID>
+		<ConnectionName>GridSoilOut</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_140">
+		<MethvarID>precip</MethvarID>
+		<ConnectionName>GridPrec</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_141">
+		<MethvarID>epot</MethvarID>
+		<ConnectionName>GridEpot</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_142">
+		<MethvarID>scov</MethvarID>
+		<ConnectionName>SCA</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_143">
+		<MethvarID>upstor</MethvarID>
+		<ConnectionName>Upstor</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_144">
+		<MethvarID>lostor</MethvarID>
+		<ConnectionName>Lstor</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_145">
+		<MethvarID>stored</MethvarID>
+		<ConnectionName>Rstore</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_146">
+		<MethvarID>outflow</MethvarID>
+		<ConnectionName>GridRunoff</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<RoutineName>QSubcat</RoutineName>
+	<MethodName>QSubcat</MethodName>
+	<NumMethVars>3</NumMethVars>
+	<Methvar object_id="_147">
+		<MethvarID>Subcats</MethvarID>
+		<ConnectionName>Catchments</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_148">
+		<MethvarID>Grid_input</MethvarID>
+		<ConnectionName>GridRunoff</ConnectionName>
+		<DataType>raster</DataType>
+	</Methvar>
+	<Methvar object_id="_149">
+		<MethvarID>Discharge</MethvarID>
+		<ConnectionName>SimDischarge</ConnectionName>
+		<DataType>network</DataType>
+	</Methvar>
+</ENKI_Model>
+</boost_serialization>
+

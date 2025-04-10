@@ -14,11 +14,12 @@ class LSTM(nn.Module):
             hidden_size=hidden_size,    # Number of hidden units
             num_layers=num_layers,      # Number of LSTM layers
             batch_first=True,           # Input shape: (batch_size, seq_length, input_size)
-            dropout=dropout             # Dropout for regularization
+            dropout=dropout,             # Dropout for regularization
+            bidirectional=True  # Enable bidirectional LSTM
         )
         
         # Fully connected layer for final output
-        self.fc = nn.Linear(hidden_size, output_size)
+        self.fc = nn.Linear(hidden_size * 2, output_size)
 
     def forward(self, x):
         # Input shape: (batch_size, seq_length, channels, height, width)

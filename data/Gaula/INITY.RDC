@@ -1,0 +1,26 @@
+file format : IDRISI Raster A.1
+file title  : 
+data type   : real
+file type   : binary
+columns     : 105
+rows        : 55
+ref. system : utm-32n
+ref. units  : m
+unit dist.  : 1.0000000
+min. X      : 540000.0000000
+max. X      : 645000.0000000
+min. Y      : 6945000.0000000
+max. Y      : 7000000.0000000
+pos'n error : unknown
+resolution  : 1000
+min. value  : 0.0100000
+max. value  : 0.0400000
+display min : 0.0100000
+display max : 0.0400000
+value units : unspecified
+value error : unknown
+flag value  : -99
+flag def'n  : missing Data
+legend cats : 0
+lineage     : This file was created by SCALAR with the command line:
+lineage     : C:\OPPMODTIL\GAULA\TMP-3.rst*C:\OPPMODTIL\GAULA\TMP-4.rst*1*0.01

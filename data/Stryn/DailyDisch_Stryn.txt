@@ -1,5 +1,5 @@
 network	Qstats	Qstats
-name	Grasdøla	Strynsvatn
+name	Grasdï¿½la	Strynsvatn
 STNR	88.15.0	88.11.0
 point id	6	5
 Missing	-99	-99

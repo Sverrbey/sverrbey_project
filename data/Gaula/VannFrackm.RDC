@@ -1,0 +1,26 @@
+file format : IDRISI Raster A.1
+file title  : 
+data type   : real
+file type   : binary
+columns     : 105
+rows        : 55
+ref. system : utm-32n
+ref. units  : m
+unit dist.  : 1.0000000
+min. X      : 540000.0000000
+max. X      : 645000.0000000
+min. Y      : 6945000.0000000
+max. Y      : 7000000.0000000
+pos'n error : unknown
+resolution  : unknown
+min. value  : 0.0000000
+max. value  : 1.0000000
+display min : 0.0000000
+display max : 1.0000000
+value units : unspecified
+value error : unknown
+flag value  : -99
+flag def'n  : Missing data
+legend cats : 0
+lineage     : This file was created by CONTRACT with the command line: 
+lineage     : J:\Prosjekt\Avd12\12X667_OPP-MOD-TIL\Under arbeid\ENKI_demo\Gaula\vann250.rst*J:\Prosjekt\Avd12\12X667_OPP-MOD-TIL\Under arbeid\ENKI_demo\Gaula\VannFrackm.rst*2*4*4
