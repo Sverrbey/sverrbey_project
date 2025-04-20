@@ -65,7 +65,6 @@ def extract_altitude_points(tif_file_path, output_csv=None):
         print(f"An error occurred: {e}")
         return None
 
-
 def cluster_elevation_data(csv_file_path, n_clusters=3, output_csv=None):
     """
     Clusters elevation data from a CSV file and visualizes the clusters.
@@ -119,7 +118,6 @@ def cluster_elevation_data(csv_file_path, n_clusters=3, output_csv=None):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-
 def create_tin_from_clustered_csv(clustered_csv_file_path, output_csv=None):
     """
     Creates and visualizes a TIN (Triangulated Irregular Network) from a clustered CSV file.
@@ -171,7 +169,6 @@ def create_tin_from_clustered_csv(clustered_csv_file_path, output_csv=None):
         print(f"File not found: {clustered_csv_file_path}")
     except Exception as e:
         print(f"An error occurred: {e}")
-
 
 def generate_contour_map(tif_file_path, contour_interval=10):
     """

@@ -10,3 +10,4 @@ __pycache__/
 model/save/
 src/data/interpolated_spatial_data/*.json
 src/data/Stryn/*.tif
+data/graphs/

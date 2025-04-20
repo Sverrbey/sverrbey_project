@@ -19,65 +19,101 @@ are chosen.
 ?- If the data includes some time series data that is updated with regular frequency this updating interval
 needs to be specified in the code.
 """
-# Import necessary models & libraries
+# Import necessary libraries & models
+import torch
+import os
+import rasterio
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
 
-import torch
-from torch.utils.data import DataLoader, TensorDataset
-import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
-import matplotlib.pyplot as plt
-
-from model.HBV import HBV_Model
-from model.LSTM import LSTM
-from model.CNN_LSTM import CNN_LSTM_Model
-from model.CNN import CNN
+from sklearn.preprocessing  import MinMaxScaler
+from torch.utils.data       import DataLoader, TensorDataset
+from model.HBV              import HBV_Model
+from model.LSTM             import LSTM
+from model.CNN_LSTM         import CNN_LSTM_Model
+from model.CNN              import CNN
 from src.spatial_data_distribution import reformat_data_stryn, reformat_data_gaula
-import os
-from src.topology import generate_contour_map
+from src.topology           import generate_contour_map
+from rasterio.enums         import Resampling
 
-import rasterio
-from rasterio.enums import Resampling
+from src.plotting           import plot_sensitivity, plot_predictions_vs_actuals, plot_interpolation
+
+#train_model
+#filter_valid_indices
+#extract_info
+#catchment_styrn, catchment_gaula
+
+#preprocess_data 
+#reformat_elevation_map
 
 def main ():
+    """
+    Main function to run the application.
+    It includes the following steps:
+    1. Define the extent of the area and the spacing between grid points.
+    2. Pick a catchment area (Stryn or Gaula).
+    3. Check if the necessary files exist. If not, generate the grid using IDW.
+    4. Read the interpolated data from JSON files.
+    5. Define the model parameters and valid data.
+    6. Preprocess the data to include additional channels for temperature and elevation.
+    7. Train the model.
+    8. Plot predictions vs actuals.
     
-    """ Parameters for the LSTM model """
-    # Define the extent of the area and the spacing between grid points
-    x_limit     = (  55000,  100000) 
-    y_limit     = (6877000, 6905000) 
+    TODO:
+    - Fix the points
+    The point ID don't overlap between values. Maybe its not that important.
+    - Fix the limits
+    
+    """
+
    
-    extent      = (x_limit[0], x_limit[1], y_limit[0], y_limit[1])  # Left, right, bottom, top
-    spacing     = 4000  # Spacing between grid points (e.g., 100 m)
-    number_days = 6*365 # Gaula max 6 years (99-05), # Stryn max 42 years (80-22)
-    
-    chosenCatchment = 'Gaula' # 'Stryn' or 'Gaula'
+    # Pick of catchment
+    chosenCatchment = 'Stryn' # 'Stryn' or 'Gaula'
     if chosenCatchment == 'Stryn':
+        # Area description 
+        x_limit     = (  55000,  100000)
+        x_degrees   = (6.45811333, 7.33417667) # (6°27'29.208", 7°20'3.036")
+        y_limit     = (6877000, 6905000) 
+        y_degrees   = (61.75932639, 62.06398778) #(61°45'33.575", 62°3'50.356")
+        extent      = (x_limit[0], x_limit[1], y_limit[0], y_limit[1])  
+        resolution  = 4000  # Spacing between grid points (e.g., 4000 m)
+        spacing = 6*365 #  max 42 years (80-22)
+        # Timeseries
         points, perc_values, temp_values, evap_values, disch_values, dates = catchment_styrn(number_days)
+
     elif chosenCatchment == 'Gaula':
+        # Area description 
+        x_limit     = (  55000,  100000)
+        x_degrees   = (6.45811333, 7.33417667) # (6°27'29.208", 7°20'3.036")
+        y_limit     = (6877000, 6905000) 
+        y_degrees   = (61.75932639, 62.06398778) #(61°45'33.575", 62°3'50.356")
+        extent      = (x_limit[0], x_limit[1], y_limit[0], y_limit[1])  
+        spacing     = 4000  # Spacing between grid points (e.g., 4000 m)
+        number_days = 6*365 # max 6 years (99-05)
+        # Timeseries
         points_gaula, perc_values, temp_values, rad_values, hyd_values, relHum_values, wind_values, disch_values, dates = catchment_gaula(number_days)
     
     # X data
-    perc_file_path = 'data/interpolated_spatial_data/perc_spatial.json'
-    temp_file_path = 'data/interpolated_spatial_data/temp.json'
-    evap_file_path = 'data/interpolated_spatial_data/evap.json'
-    rad_file_path = 'data/interpolated_spatial_data/rad.json'   
-    hyd_file_path = 'data/interpolated_spatial_data/hyd.json'
+    perc_file_path  = 'data/interpolated_spatial_data/perc_spatial.json'
+    temp_file_path  = 'data/interpolated_spatial_data/temp.json'
+    evap_file_path  = 'data/interpolated_spatial_data/evap.json'
+    rad_file_path   = 'data/interpolated_spatial_data/rad.json'   
+    hyd_file_path   = 'data/interpolated_spatial_data/hyd.json'
     relHum_file_path = 'data/interpolated_spatial_data/relHum.json'
-    wind_file_path = 'data/interpolated_spatial_data/wind.json'
+    wind_file_path  = 'data/interpolated_spatial_data/wind.json'
 
     # Y data
     disch_file_path = 'data/interpolated_spatial_data/discharge.json'
 
+    # Catchment file paths
     stryn_file_paths = [perc_file_path, disch_file_path, temp_file_path, evap_file_path]
     gaula_file_paths = [perc_file_path, disch_file_path, temp_file_path, rad_file_path, hyd_file_path, relHum_file_path, wind_file_path]
 
     # Parameter data
     elevation_tiff_path = 'data/Stryn/Elevation.tif'
 
-    # Check if the files exist
+    # Check if the files exist or interpolate data
     if chosenCatchment == 'Stryn' and any(not os.path.exists(file) for file in stryn_file_paths):
         # Generate the grid using IDW
         reformat_data_stryn(points, perc_values, temp_values, evap_values, disch_values, number_days, dates, stryn_file_paths, extent=extent, spacing=spacing, power=2)
@@ -85,6 +121,7 @@ def main ():
         # Generate the grid using IDW
         reformat_data_gaula(points_gaula, perc_values, temp_values, rad_values, hyd_values, relHum_values, wind_values, disch_values, number_days, dates, gaula_file_paths, extent=extent, spacing=spacing, power=2)
     
+    # Reading the interpolated data
     if chosenCatchment == 'Stryn':
         df_perc     = pd.read_json(perc_file_path, orient='values')
         df_disch    = pd.read_json(disch_file_path, orient='values')
@@ -95,7 +132,6 @@ def main ():
         df_disch.columns    = ["Date", "discharge"]
         df_temp.columns     = ["Date", "interpolated_temp"]
         df_evap.columns     = ["Date", "interpolated_evap"]
-    ##############################################################################
     elif chosenCatchment == 'Gaula':
         df_perc     = pd.read_json(perc_file_path, orient='values')
         df_disch    = pd.read_json(disch_file_path, orient='values')
@@ -113,17 +149,7 @@ def main ():
         df_relHum.columns   = ["Date", "interpolated_relHum"]
         df_wind.columns     = ["Date", "interpolated_wind"]
     
-    """ Plotting the interpolated percipitation pattern  
-    grid_perc = df_perc['interpolated_perc'].to_list()
-    grid_temp = df_temp['interpolated_temp'].to_list()
-    grid_evap = df_evap['interpolated_evap'].to_list()
-
-    day = 8 
-    plot_interpolation(grid_perc, day, points, disch_points, extent, 'Precipitation')
-    plot_interpolation(grid_temp, day, points, disch_points, extent, 'Temperature')
-    plot_interpolation(grid_evap, day, points, disch_points, extent, 'Evaporation')
-    """
-
+    # Defining the model parameters and valid data
     if chosenCatchment == 'Stryn':
         # Assuming x_data and y_data are your input and target data
         perc_data   = np.array(df_perc['interpolated_perc'].tolist())
@@ -158,7 +184,19 @@ def main ():
         input_size      = perc_data.shape[1:3]
         height          = input_size[0]
         width           = input_size[1]
-    
+
+
+        """ Plotting the interpolated percipitation pattern  
+
+        graph_patch_perc = 'data/graphs/perc'
+        graph_patch_temp = 'data/graphs/temp'
+        graph_patch_evap = 'data/graphs/evap'
+
+        #for day in range(1, len(perc_data)+1):
+            #plot_interpolation(perc_data, day, points, graph_patch_perc, extent, 'Precipitation')
+            #plot_interpolation(temp_data, day, points, graph_patch_temp, extent, 'Temperature')
+            #plot_interpolation(evap_data, day, points, extent,graph_patch_evap, 'Evaporation')
+        """
     elif chosenCatchment == 'Gaula':
         # Assuming x_data and y_data are your input and target data
         perc_data   = np.array(df_perc['interpolated_perc'].tolist())
@@ -200,8 +238,9 @@ def main ():
 
     #model_CNN_LSTM  = CNN_LSTM_Model(input_channels, height, width, hidden_size, output_size, num_layers=num_layers, dropout=dropout)
     #model_CNN       = CNN(input_channels, output_size, hidden_size)
-    model_LSTM      = LSTM(input_channels, height, width, hidden_size, output_size, num_layers=num_layers, dropout = dropout)
+    model_LSTM       = LSTM(input_channels, height, width, hidden_size, output_size, num_layers=num_layers, dropout = dropout)
 
+    # Combining the data for training
     if chosenCatchment == 'Stryn':
         # Reshape perc_data and temp_data to 2D for normalization
         num_samples, height, width = perc_data.shape
@@ -212,7 +251,6 @@ def main ():
         # Stack the features along the last axis
         combined_data = np.stack([perc_data_reshaped, temp_data_reshaped, evap_data_reshaped], axis=-1)  # Shape: (num_samples, height * width, 3)
         combined_data = combined_data.reshape(num_samples, -1)  # Flatten spatial dimensions for normalization
-
     elif chosenCatchment == 'Gaula':
         # Reshape perc_data and temp_data to 2D for normalization
         num_samples, height, width = perc_data.shape
@@ -233,9 +271,9 @@ def main ():
     #model.load_state_dict(torch.load('/Users/SverreB/Github_Repo/sverrbey_project/model/save/CNN_LSTM_1.pth'))
 
     # Train the model
-    #model_CNN_LSTM  = train_model(model_CNN_LSTM, train_dataloader, val_dataloader, 'CNN_LSTM_gaula_opt', scaler_y, scaler_x, seq_length=seq_length)
-    #model_CNN       = train_model(model_CNN, train_dataloader, val_dataloader, 'CNN_gaula', scaler_y, scaler_x, seq_length=seq_length)
-    model_LSTM      = train_model(model_LSTM, train_dataloader, val_dataloader, f'LSTM_stryn_opt', scaler_y, scaler_x, seq_length=seq_length)
+    #model_CNN_LSTM  = train_model(model_CNN_LSTM, train_dataloader, val_dataloader, 'CNN_LSTM_gaula_opt', scaler_y)
+    #model_CNN       = train_model(model_CNN, train_dataloader, val_dataloader, 'CNN_gaula', scaler_y)
+    #model_LSTM      = train_model(model_LSTM, train_dataloader, val_dataloader, 'LSTM_stryn_opt', scaler_y)
 
     # Load the saved model state dict
     #model_CNN_LSTM.load_state_dict(torch.load('/Users/SverreB/Github_Repo/sverrbey_project/model/save/CNN_LSTM.pth'))
@@ -245,17 +283,17 @@ def main ():
     # Plot predictions vs actuals
     #plot_predictions_vs_actuals(model_CNN_LSTM, test_dataloader, scaler_y, 'CNN_LSTM_gaula')
     #plot_predictions_vs_actuals(model_CNN, test_dataloader, scaler_y, 'CNN_gaula')
-    plot_predictions_vs_actuals(model_LSTM, test_dataloader, scaler_y, 'LSTM_stryn')
+    #plot_predictions_vs_actuals(model_LSTM, test_dataloader, scaler_y, 'LSTM_stryn')
     
 
-def preprocess_data(combined_data, y_data, input_size, seq_length, batch_size,channels = 3, train_split=0.7, validation_split=0.15, test_split=0.15):
+def preprocess_data(combined_data, y_data, input_size, seq_length, batch_size,channels=3, train_split=0.7, validation_split=0.15, test_split=0.15):
     """
-    Preprocess the data to include additional channels for temperature and elevation.
+    * Process the data for training, validation, and testing.
+    * This function normalizes the input data, creates sequences, and splits the data into training,
+    validation, and testing sets.
 
     Args:
-        perc_data: Precipitation data (shape: [num_samples, height, width]).
-        temp_data: Temperature data (shape: [num_samples, height, width]).
-        evap_data: Evaporation data (shape: [num_samples, height, width]).
+        combinde_data: Combined input data (shape: [num_samples, height * width * channels]).
         y_data: Target data, discharge (shape: [num_samples, num_targets]).
         seq_length: Sequence length for LSTM.
         batch_size: Batch size for DataLoader.
@@ -323,75 +361,7 @@ def preprocess_data(combined_data, y_data, input_size, seq_length, batch_size,ch
 
     return train_dataloader, val_dataloader, test_dataloader, scaler_x, scaler_y
 
-def plot_sensitivity(model, dataloader, scaler_y, number):
-    model.eval()
-    predictions = []
-    actuals = []
-    
-    with torch.no_grad():
-        for batch_x, batch_y in dataloader:
-            outputs = model(batch_x)
-            predictions.append(outputs.cpu().numpy())
-            actuals.append(batch_y.cpu().numpy())
-    
-    # Concatenate predictions and actuals along the first axis
-    predictions = np.concatenate(predictions, axis=0)  # Shape: (num_samples, output_size)
-    actuals = np.concatenate(actuals, axis=0)          # Shape: (num_samples, output_size)
-    
-    # Ensure predictions have the same shape as the scaler's expected input
-    if predictions.shape[1] != scaler_y.min_.shape[0]:
-        raise ValueError(f"Predictions shape {predictions.shape} does not match scaler's expected shape {scaler_y.min_.shape}")
-
-    # Inverse transform the predictions and actuals to the original scale
-    predictions = scaler_y.inverse_transform(predictions)
-    actuals = scaler_y.inverse_transform(actuals)
-    
-    plt.plot(actuals[:, 0], color='red')
-    plt.plot(predictions[:, 0], label=f'Predicted Data [{2**(3+number)}]', linestyle='--')
-    if actuals.shape[1] > 1:  # If there are multiple target features
-        plt.plot(actuals[:, 1], color='red')
-        plt.plot(predictions[:, 1], label=f'Predicted Data [{2**(3+number)}]', linestyle='--')
-
-def plot_predictions_vs_actuals(model, dataloader, scaler_y, name):
-    model.eval()
-    predictions = []
-    actuals = []
-    
-    with torch.no_grad():
-        for batch_x, batch_y in dataloader:
-            outputs = model(batch_x)
-            predictions.append(outputs.cpu().numpy())
-            actuals.append(batch_y.cpu().numpy())
-    
-    # Concatenate predictions and actuals along the first axis
-    predictions = np.concatenate(predictions, axis=0)  # Shape: (num_samples, output_size)
-    actuals = np.concatenate(actuals, axis=0)          # Shape: (num_samples, output_size)
-    
-    # Ensure predictions have the same shape as the scaler's expected input
-    if predictions.shape[1] != scaler_y.min_.shape[0]:
-        raise ValueError(f"Predictions shape {predictions.shape} does not match scaler's expected shape {scaler_y.min_.shape}")
-
-    # Inverse transform the predictions and actuals to the original scale
-    predictions = scaler_y.inverse_transform(predictions)
-    actuals = scaler_y.inverse_transform(actuals)
-    
-    
-    # Plot the predictions vs actuals
-    plt.figure(figsize=(10, 6))
-    plt.plot(actuals[:, 0], label='Actual Data (Feature 1)')
-    plt.plot(predictions[:, 0], label='Predicted Data (Feature 1)', linestyle='--')
-    if actuals.shape[1] > 1:  # If there are multiple target features
-        for i in range(min(4, actuals.shape[1])):  # Plot up to 4 features
-            plt.plot(actuals[:, i], label=f'Actual Data (Feature {i + 1})')
-            plt.plot(predictions[:, i], label=f'Predicted Data (Feature {i + 1})', linestyle='--')
-
-    plt.xlabel('Time Step [days]')
-    plt.ylabel('Value')
-    plt.title(name +': Model Predictions vs Actual Data')
-    plt.legend()
-    plt.show()
-    
-def train_model(model, train_dataloader, val_dataloader, name, scaler_y, scaler_x, seq_length=10, num_epochs=500, learning_rate=0.001):
+def train_model(model, train_dataloader, val_dataloader, name, scaler_y, num_epochs=500, learning_rate=0.001):
     """
     Train the CNN_LSTM model.
 
@@ -490,23 +460,6 @@ def train_model(model, train_dataloader, val_dataloader, name, scaler_y, scaler_
     # Save the final model
     torch.save(model.state_dict(), '/Users/SverreB/Github_Repo/sverrbey_project/model/save/' + name + '.pth')
     return model
-
-def plot_interpolation(grid_list, day, perc_points, disch_points, extent, title):
-
-    # Plot the interpolated grid for the first time step
-    plt.rcParams["figure.figsize"] = (20, 7)
-    grid_plot = grid_list[day-1]
-    plt.imshow(grid_plot, extent=(extent[0], extent[1], extent[2], extent[3]), origin='lower', cmap='viridis')
-    plt.colorbar(label='Interpolated Value')
-    plt.scatter(*zip(*perc_points.values()), color='red', label='Known Data Points')
-    plt.scatter(*zip(*disch_points.values()), color='blue', label='Discharge Stations')
-    # Annotate each scatter point with its corresponding number
-    for key, (x, y) in perc_points.items():
-        plt.text(x, y, key, fontsize=12, ha='right', color='white')
-    plt.legend(loc='upper right')
-    plt.title(title + ': 2D Interpolated Data Representation using IDW : Day ' + str(day))
-    plt.grid()
-    plt.show()
 
 def reformat_elevation_map(tif_path, target_shape):
     """
