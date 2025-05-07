@@ -18,6 +18,9 @@ are chosen.
 
 ?- If the data includes some time series data that is updated with regular frequency this updating interval
 needs to be specified in the code.
+
+TODO: Predict future values. Start with a graphical representation
+
 """
 # Import necessary libraries & models
 import torch
@@ -30,7 +33,9 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing  import MinMaxScaler
 from torch.utils.data       import DataLoader, TensorDataset
 from model.HBV              import HBV_Model
+from model.HBV_for_LSTM     import HBV_Model_LSTM
 from model.LSTM             import LSTM
+from model.HBV_LSTM         import HBV_LSTM
 from model.CNN_LSTM         import CNN_LSTM_Model
 from model.CNN              import CNN
 from src.spatial_data_distribution import reformat_data_stryn, reformat_data_gaula
@@ -63,37 +68,44 @@ def main ():
     TODO:
     - Fix the points
     The point ID don't overlap between values. Maybe its not that important.
-    - Fix the limits
+    
+    #Note: The level of accuracy the model is able to achieve defines how good it is
+    able to predict the water flow as it is right now. In addition to capturing the
+    current water flow, the model should then deliever the water flow for the next 
+    hours and days with a displayed level of uncertainty. This uncertainty curve can
+    be generated based on the historical accuracy of the model to predict the future trends. 
     
     """
 
    
     # Pick of catchment
-    chosenCatchment = 'Stryn' # 'Stryn' or 'Gaula'
+    chosenCatchment = 'Gaula' # 'Stryn' or 'Gaula'
     if chosenCatchment == 'Stryn':
-        # Area description 
-        x_limit     = (  55000,  100000)
-        x_degrees   = (6.45811333, 7.33417667) # (6°27'29.208", 7°20'3.036")
-        y_limit     = (6877000, 6905000) 
-        y_degrees   = (61.75932639, 62.06398778) #(61°45'33.575", 62°3'50.356")
-        extent      = (x_limit[0], x_limit[1], y_limit[0], y_limit[1])  
         resolution  = 4000  # Spacing between grid points (e.g., 4000 m)
-        spacing = 6*365 #  max 42 years (80-22)
+        number_days = 6*365 #  max 42 years (80-22)
         # Timeseries
         points, perc_values, temp_values, evap_values, disch_values, dates = catchment_styrn(number_days)
 
-    elif chosenCatchment == 'Gaula':
         # Area description 
-        x_limit     = (  55000,  100000)
+        x_limit = (min(points.values(), key=lambda p: p[0])[0], max(points.values(), key=lambda p: p[0])[0])
+        y_limit = (min(points.values(), key=lambda p: p[1])[1], max(points.values(), key=lambda p: p[1])[1])
         x_degrees   = (6.45811333, 7.33417667) # (6°27'29.208", 7°20'3.036")
-        y_limit     = (6877000, 6905000) 
         y_degrees   = (61.75932639, 62.06398778) #(61°45'33.575", 62°3'50.356")
         extent      = (x_limit[0], x_limit[1], y_limit[0], y_limit[1])  
-        spacing     = 4000  # Spacing between grid points (e.g., 4000 m)
+        
+        
+    elif chosenCatchment == 'Gaula':
+        spacing     = 8000  # Spacing between grid points (e.g., 4000 m)
         number_days = 6*365 # max 6 years (99-05)
         # Timeseries
         points_gaula, perc_values, temp_values, rad_values, hyd_values, relHum_values, wind_values, disch_values, dates = catchment_gaula(number_days)
-    
+        # Area description 
+        x_limit = (min(points_gaula.values(), key=lambda p: p[0])[0], max(points_gaula.values(), key=lambda p: p[0])[0])
+        y_limit = (min(points_gaula.values(), key=lambda p: p[1])[1], max(points_gaula.values(), key=lambda p: p[1])[1])
+        x_degrees   = (0, 0) # (6°27'29.208", 7°20'3.036")
+        y_degrees   = (0, 0) #(61°45'33.575", 62°3'50.356")
+        extent      = (x_limit[0], x_limit[1], y_limit[0], y_limit[1])  
+        
     # X data
     perc_file_path  = 'data/interpolated_spatial_data/perc_spatial.json'
     temp_file_path  = 'data/interpolated_spatial_data/temp.json'
@@ -110,8 +122,6 @@ def main ():
     stryn_file_paths = [perc_file_path, disch_file_path, temp_file_path, evap_file_path]
     gaula_file_paths = [perc_file_path, disch_file_path, temp_file_path, rad_file_path, hyd_file_path, relHum_file_path, wind_file_path]
 
-    # Parameter data
-    elevation_tiff_path = 'data/Stryn/Elevation.tif'
 
     # Check if the files exist or interpolate data
     if chosenCatchment == 'Stryn' and any(not os.path.exists(file) for file in stryn_file_paths):
@@ -121,6 +131,7 @@ def main ():
         # Generate the grid using IDW
         reformat_data_gaula(points_gaula, perc_values, temp_values, rad_values, hyd_values, relHum_values, wind_values, disch_values, number_days, dates, gaula_file_paths, extent=extent, spacing=spacing, power=2)
     
+
     # Reading the interpolated data
     if chosenCatchment == 'Stryn':
         df_perc     = pd.read_json(perc_file_path, orient='values')
@@ -184,19 +195,6 @@ def main ():
         input_size      = perc_data.shape[1:3]
         height          = input_size[0]
         width           = input_size[1]
-
-
-        """ Plotting the interpolated percipitation pattern  
-
-        graph_patch_perc = 'data/graphs/perc'
-        graph_patch_temp = 'data/graphs/temp'
-        graph_patch_evap = 'data/graphs/evap'
-
-        #for day in range(1, len(perc_data)+1):
-            #plot_interpolation(perc_data, day, points, graph_patch_perc, extent, 'Precipitation')
-            #plot_interpolation(temp_data, day, points, graph_patch_temp, extent, 'Temperature')
-            #plot_interpolation(evap_data, day, points, extent,graph_patch_evap, 'Evaporation')
-        """
     elif chosenCatchment == 'Gaula':
         # Assuming x_data and y_data are your input and target data
         perc_data   = np.array(df_perc['interpolated_perc'].tolist())
@@ -206,8 +204,9 @@ def main ():
         relHum_data = np.array(df_relHum['interpolated_relHum'].tolist())
         wind_data   = np.array(df_wind['interpolated_wind'].tolist())
         y_data      = np.array(df_disch['discharge'].tolist())
+
         # Mask rows where any feature in y_data is equal to -99.0 and the sequence length isn't possible
-        seq_length = 7
+        seq_length = 4
         valid_indices = filter_valid_indices(y_data, seq_length) 
         perc_data = perc_data[valid_indices]
         temp_data = temp_data[valid_indices]
@@ -217,21 +216,17 @@ def main ():
         wind_data = wind_data[valid_indices]
         y_data = y_data[valid_indices]
 
-        # Replace NaN values in y_data with 0
-        #y_data = np.nan_to_num(y_data, nan=0.0001)
-        
-        # Extract the second column and keep it as 2D
-        y_data = y_data[:, [0,1,3,4]]  # Shape: (num_samples, 1)   
-        perc_data_shape = perc_data.shape[1:3]   
+        # Adjusting the output_size
+        y_data = y_data[:, [0,1,2,3,4]]  # Shape: (num_samples, output_size)   
+
         #elev_data = reformat_elevation_map(elevation_tiff_path, perc_data_shape)
-        
         num_layers      = 4  # Increase the number of LSTM layers
         dropout         = 0.4  # Adjust the dropout rate
         batch_size      = 2**6 # 64
         seq_length      = seq_length # days (# Because we're removing some days)
         input_channels  = 6  # Number of input channels (precipitation, temperature, evaporation)
         hidden_size     = 2**8
-        output_size     = 4  # Number of target features
+        output_size     = y_data.shape[1]  # Number of target features
         input_size      = perc_data.shape[1:3]
         height          = input_size[0]
         width           = input_size[1]
@@ -273,18 +268,49 @@ def main ():
     # Train the model
     #model_CNN_LSTM  = train_model(model_CNN_LSTM, train_dataloader, val_dataloader, 'CNN_LSTM_gaula_opt', scaler_y)
     #model_CNN       = train_model(model_CNN, train_dataloader, val_dataloader, 'CNN_gaula', scaler_y)
-    #model_LSTM      = train_model(model_LSTM, train_dataloader, val_dataloader, 'LSTM_stryn_opt', scaler_y)
+    #model_LSTM      = train_model(model_LSTM, train_dataloader, val_dataloader, 'LSTM_gaula_res_8000', scaler_y)
 
     # Load the saved model state dict
     #model_CNN_LSTM.load_state_dict(torch.load('/Users/SverreB/Github_Repo/sverrbey_project/model/save/CNN_LSTM.pth'))
     #model_CNN.load_state_dict(torch.load('/Users/SverreB/Github_Repo/sverrbey_project/model/save/CNN.pth'))
-    #model_LSTM.load_state_dict(torch.load('/Users/SverreB/Github_Repo/sverrbey_project/model/save/LSTM.pth'))
+    #model_LSTM.load_state_dict(torch.load('/Users/SverreB/Github_Repo/sverrbey_project/model/save/LSTM_gaula_res_8000.pth'))
 
     # Plot predictions vs actuals
     #plot_predictions_vs_actuals(model_CNN_LSTM, test_dataloader, scaler_y, 'CNN_LSTM_gaula')
     #plot_predictions_vs_actuals(model_CNN, test_dataloader, scaler_y, 'CNN_gaula')
-    #plot_predictions_vs_actuals(model_LSTM, test_dataloader, scaler_y, 'LSTM_stryn')
+    #plot_predictions_vs_actuals(model_LSTM, test_dataloader, scaler_y, 'LSTM_Gaula')
     
+
+    # TODO: New modeling approach
+    points = []
+    df_discharge    = pd.read_csv('data/Gaula/DailyDischarge_Gaula.txt', header=None, encoding='latin1', delimiter='\t')
+    disch_info, df_discharge  = extract_info(df_discharge, 'point id')
+    for pointID in disch_info.index:
+        x = float(disch_info['Xcoord'][pointID])
+        y = float(disch_info['Ycoord'][pointID])
+
+        j = int((x-x_limit[0]) / spacing)
+        i = int((y-y_limit[0]) / spacing)
+        points.append((i, j))
+    # Parameter data
+    elevation_path = 'data/Gaula/ELEVATION.rst'
+    elev_array = read_rst_to_array_with_custom_size(elevation_path, width, height)
+    
+    df_parameter = pd.DataFrame()
+    df_parameter["TT"]      = {"interval": [0, 1], "calibration": 0.0}
+    df_parameter["CFR"]     = {"interval": [0, 1], "calibration": 0.0}
+    df_parameter["CFMAX"]   = {"interval": [0, 1], "calibration": 0.0}
+    df_parameter["FC"]      = {"interval": [0, 1], "calibration": 0.0}
+    df_parameter["UZL"]     = {"interval": [0, 1], "calibration": 0.0}
+    df_parameter["K0"]      = {"interval": [0, 1], "calibration": 0.0}
+    df_parameter["K1"]      = {"interval": [0, 1], "calibration": 0.0}
+    df_parameter["K2"]      = {"interval": [0, 1], "calibration": 0.0}
+    df_parameter["PERC"]    = {"interval": [0, 1], "calibration": 0.0}
+    df_parameter["CN"]      = {"interval": [0, 1], "calibration": 0.0}
+
+    output_channels = df_parameter.shape[1]
+    model_HBV_LSTM  = HBV_LSTM(input_channels, output_channels, height, width, hidden_size, num_layers=num_layers, dropout = dropout)
+    train_model_v2(model_HBV_LSTM, train_dataloader, elev_array, points, output_channels, height, width, extent, val_dataloader, 'version_2', scaler_y,)
 
 def preprocess_data(combined_data, y_data, input_size, seq_length, batch_size,channels=3, train_split=0.7, validation_split=0.15, test_split=0.15):
     """
@@ -361,7 +387,7 @@ def preprocess_data(combined_data, y_data, input_size, seq_length, batch_size,ch
 
     return train_dataloader, val_dataloader, test_dataloader, scaler_x, scaler_y
 
-def train_model(model, train_dataloader, val_dataloader, name, scaler_y, num_epochs=500, learning_rate=0.001):
+def train_model(model, train_dataloader, val_dataloader, name, scaler_y, num_epochs=100, learning_rate=0.001):
     """
     Train the CNN_LSTM model.
 
@@ -391,6 +417,13 @@ def train_model(model, train_dataloader, val_dataloader, name, scaler_y, num_epo
         model.train()
         train_loss = 0.0
         train_nse = 0.0
+        train_rmse = 0.0
+        train_mae = 0.0
+        train_mape = 0.0
+        train_r_squared = 0.0
+        train_kge = 0.0
+        train_pearson = 0.0
+       
 
         for batch_x, batch_y in train_dataloader:
             # Forward pass
@@ -408,11 +441,15 @@ def train_model(model, train_dataloader, val_dataloader, name, scaler_y, num_epo
             y_true = scaler_y.inverse_transform(batch_y.detach().cpu().numpy())
             y_pred = scaler_y.inverse_transform(outputs.detach().cpu().numpy())
 
-            # Calculate NSE in the original scale
-            numerator = np.sum((y_true - y_pred) ** 2)
-            denominator = np.sum((y_true - np.mean(y_true)) ** 2)
-            batch_nse = 1 - (numerator / denominator if denominator != 0 else 0)
-            train_nse += batch_nse
+            
+            train_nse   += NSE_formula(y_true, y_pred)
+            train_rmse  += RMSE_formula(y_true, y_pred)
+            train_mae   += MAE_formula(y_true, y_pred)
+            train_mape  += MAPE_formula(y_true, y_pred)
+            train_r_squared += R_squared_formula(y_true, y_pred)
+            train_kge   += KGE_formula(y_true, y_pred)
+            train_pearson   += Pearson_formula(y_true, y_pred)
+
 
         train_loss /= len(train_dataloader)
         train_nse /= len(train_dataloader)
@@ -420,7 +457,13 @@ def train_model(model, train_dataloader, val_dataloader, name, scaler_y, num_epo
         # Validation loop
         model.eval()
         val_loss = 0.0
-        val_nse = 0.0
+        val_nse  = 0.0
+        val_rmse = 0.0
+        val_mae  = 0.0
+        val_mape = 0.0
+        val_r_squared = 0.0
+        val_kge  = 0.0
+        val_pearson   = 0.0
         with torch.no_grad():
             for batch_x, batch_y in val_dataloader:
                 outputs = model(batch_x)
@@ -431,18 +474,21 @@ def train_model(model, train_dataloader, val_dataloader, name, scaler_y, num_epo
                 y_true = scaler_y.inverse_transform(batch_y.detach().cpu().numpy())
                 y_pred = scaler_y.inverse_transform(outputs.detach().cpu().numpy())
 
-                # Calculate NSE in the original scale
-                numerator = np.sum((y_true - y_pred) ** 2)
-                denominator = np.sum((y_true - np.mean(y_true)) ** 2)
-                batch_nse = 1 - (numerator / denominator if denominator != 0 else 0)
-                val_nse += batch_nse
+                val_nse   += NSE_formula(y_true, y_pred)
+                val_rmse  += RMSE_formula(y_true, y_pred)
+                val_mae   += MAE_formula(y_true, y_pred)
+                val_mape  += MAPE_formula(y_true, y_pred)
+                val_r_squared += R_squared_formula(y_true, y_pred)
+                val_kge   += KGE_formula(y_true, y_pred)
+                val_pearson   += Pearson_formula(y_true, y_pred)
 
         val_loss /= len(val_dataloader)
         val_nse /= len(val_dataloader)
 
         # Print epoch results
         print(f"Epoch [{epoch+1}/{num_epochs}], Train Loss: {train_loss:.4f}, Train NSE: {train_nse:.4f}, Val Loss: {val_loss:.4f}, Val NSE: {val_nse:.4f}")
-
+        print(f"Train RMSE: {train_rmse:.4f}, Train MAE: {train_mae:.4f}, Train MAPE: {train_mape:.4f}, Train R^2: {train_r_squared:.4f}, Train KGE: {train_kge:.4f}, Train Pearson: {train_pearson:.4f}")
+        print(f"Val RMSE: {val_rmse:.4f}, Val MAE: {val_mae:.4f}, Val MAPE: {val_mape:.4f}, Val R^2: {val_r_squared:.4f}, Val KGE: {val_kge:.4f}, Val Pearson: {val_pearson:.4f}")
         # Early stopping logic
         if val_loss < best_val_loss:
             best_val_loss = val_loss
@@ -460,6 +506,138 @@ def train_model(model, train_dataloader, val_dataloader, name, scaler_y, num_epo
     # Save the final model
     torch.save(model.state_dict(), '/Users/SverreB/Github_Repo/sverrbey_project/model/save/' + name + '.pth')
     return model
+
+def train_model_v2(model, train_dataloader, elev_map, points, channels, height, width, extent, val_dataloader, name, scaler_y, num_epochs=100, learning_rate=0.001):
+    """
+    Description:
+    """
+    # Define the loss function and optimizer
+    criterion = torch.nn.MSELoss()  # Mean Squared Error Loss
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+    # Early stopping parameters
+    patience = 15  # Number of epochs to wait for improvement
+    best_val_loss = float('inf')
+    early_stop_counter = 0
+
+    # Training loop
+    for epoch in range(num_epochs):
+        model.train()
+        train_loss = 0.0
+        train_nse = 0.0
+        train_rmse = 0.0
+        train_mae = 0.0
+        train_mape = 0.0
+        train_r_squared = 0.0
+        train_kge = 0.0
+        train_pearson = 0.0
+
+        for batch_x, batch_y in train_dataloader:
+            # Forward pass
+            output = model(batch_x)
+            hbv_model = HBV_Model_LSTM(output, channels, height, width)
+            hbv_outputs = hbv_model.forward(batch_x, channels, height, width, extent)
+            routing = route_flow(outputs, elev_map)
+            
+            
+            physcial_outputs = []
+            for (i, j) in points:
+                # Extract the output for the specific point
+                physcial_outputs.append(routing[:, i, j])  # Extract values for each batch
+            # Convert to a tensor
+            outputs = torch.stack(physcial_outputs, dim=1)  # Shape: (batch_size, num_points)
+            
+            # Calculate loss
+            loss = criterion(outputs, batch_y)
+
+            # Backward pass and optimization
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            train_loss += loss.item()
+
+            # Denormalize the predictions and true values
+            y_true = scaler_y.inverse_transform(batch_y.detach().cpu().numpy())
+            y_pred = scaler_y.inverse_transform(outputs.detach().cpu().numpy())
+
+            
+            train_nse   += NSE_formula(y_true, y_pred)
+            train_rmse  += RMSE_formula(y_true, y_pred)
+            train_mae   += MAE_formula(y_true, y_pred)
+            train_mape  += MAPE_formula(y_true, y_pred)
+            train_r_squared += R_squared_formula(y_true, y_pred)
+            train_kge   += KGE_formula(y_true, y_pred)
+            train_pearson   += Pearson_formula(y_true, y_pred)
+
+
+        train_loss /= len(train_dataloader)
+        train_nse /= len(train_dataloader)
+
+        # Validation loop
+        model.eval()
+        val_loss = 0.0
+        val_nse  = 0.0
+        val_rmse = 0.0
+        val_mae  = 0.0
+        val_mape = 0.0
+        val_r_squared = 0.0
+        val_kge  = 0.0
+        val_pearson   = 0.0
+        with torch.no_grad():
+            for batch_x, batch_y in val_dataloader:
+                output = model(batch_x)
+                hbv_model = HBV_Model_LSTM(output, channels, height, width)
+                hbv_outputs = hbv_model.forward(batch_x, channels, height, width, extent)
+                routing = route_flow(outputs, elev_map)
+                
+                
+                physcial_outputs = []
+                for (i, j) in points:
+                    # Extract the output for the specific point
+                    physcial_outputs.append(routing[:, i, j])  # Extract values for each batch
+                # Convert to a tensor
+                outputs = torch.stack(physcial_outputs, dim=1) 
+                loss = criterion(outputs, batch_y)
+                val_loss += loss.item()
+
+                # Denormalize the predictions and true values
+                y_true = scaler_y.inverse_transform(batch_y.detach().cpu().numpy())
+                y_pred = scaler_y.inverse_transform(outputs.detach().cpu().numpy())
+
+                val_nse   += NSE_formula(y_true, y_pred)
+                val_rmse  += RMSE_formula(y_true, y_pred)
+                val_mae   += MAE_formula(y_true, y_pred)
+                val_mape  += MAPE_formula(y_true, y_pred)
+                val_r_squared += R_squared_formula(y_true, y_pred)
+                val_kge   += KGE_formula(y_true, y_pred)
+                val_pearson   += Pearson_formula(y_true, y_pred)
+
+        val_loss /= len(val_dataloader)
+        val_nse /= len(val_dataloader)
+
+        # Print epoch results
+        print(f"Epoch [{epoch+1}/{num_epochs}], Train Loss: {train_loss:.4f}, Train NSE: {train_nse:.4f}, Val Loss: {val_loss:.4f}, Val NSE: {val_nse:.4f}")
+        print(f"Train RMSE: {train_rmse:.4f}, Train MAE: {train_mae:.4f}, Train MAPE: {train_mape:.4f}, Train R^2: {train_r_squared:.4f}, Train KGE: {train_kge:.4f}, Train Pearson: {train_pearson:.4f}")
+        print(f"Val RMSE: {val_rmse:.4f}, Val MAE: {val_mae:.4f}, Val MAPE: {val_mape:.4f}, Val R^2: {val_r_squared:.4f}, Val KGE: {val_kge:.4f}, Val Pearson: {val_pearson:.4f}")
+        # Early stopping logic
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            early_stop_counter = 0
+            # Save the best model
+            torch.save(model.state_dict(), '/Users/SverreB/Github_Repo/sverrbey_project/model/save/' + name + '_best.pth')
+        else:
+            early_stop_counter += 1
+            print(f"Early stopping counter: {early_stop_counter}/{patience}")
+
+        if early_stop_counter >= patience:
+            print("Early stopping triggered. Stopping training.")
+            break
+
+    # Save the final model
+    torch.save(model.state_dict(), '/Users/SverreB/Github_Repo/sverrbey_project/model/save/' + name + '.pth')
+    return model
+        
 
 def reformat_elevation_map(tif_path, target_shape):
     """
@@ -630,5 +808,148 @@ def catchment_gaula(number_days):
 
     return points_gaula, perc_values, temp_values, rad_values, hyd_values, relHum_values, wind_values, disch_values, dates
 
+# Evaluation metrics
+def NSE_formula(y_true, y_pred):
+    # Calculate NSE in the original scale
+    numerator = np.sum((y_true - y_pred) ** 2)
+    denominator = np.sum((y_true - np.mean(y_true)) ** 2)
+    return 1 - (numerator / denominator if denominator != 0 else 0)
+
+def RMSE_formula(y_true, y_pred):
+    # Calculate RMSE in the original scale
+    mse = np.mean((y_true - y_pred) ** 2)
+    return np.sqrt(mse)
+
+def MAE_formula(y_true, y_pred):
+    # Calculate MAE in the original scale
+    mae = np.mean(np.abs(y_true - y_pred))
+    return mae
+
+def MAPE_formula(y_true, y_pred):
+    # Calculate MAPE in the original scale
+    mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+    return mape
+
+def R_squared_formula(y_true, y_pred):
+    # Calculate R-squared in the original scale
+    ss_res = np.sum((y_true - y_pred) ** 2)
+    ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
+    return 1 - (ss_res / ss_tot if ss_tot != 0 else 0)
+
+def KGE_formula(y_true, y_pred):
+    # Calculate KGE in the original scale
+    mean_y_true = np.mean(y_true)
+    mean_y_pred = np.mean(y_pred)
+    std_y_true = np.std(y_true)
+    std_y_pred = np.std(y_pred)
+    correlation = np.corrcoef(y_true, y_pred)[0, 1]
+    
+    kge = correlation * (std_y_pred / std_y_true) * (mean_y_pred / mean_y_true)
+    return kge
+
+def Pearson_formula(y_true, y_pred):
+    # Calculate Pearson correlation coefficient
+    return np.corrcoef(y_true, y_pred)[0, 1]
+
+
+def route_flow(flow_matrix, elevation_map):
+    """
+    Routes the flow based on the elevation map.
+
+    Args:
+        flow_matrix (torch.Tensor): Tensor of shape (batch_size, seq_length, height, width) representing flow/discharge.
+        elevation_map (np.ndarray): 2D NumPy array of shape (height, width) representing the elevation.
+
+    Returns:
+        torch.Tensor: Routed flow matrix with the same shape as the input flow_matrix.
+    """
+    # Get dimensions
+    batch_size, height, width = flow_matrix.shape
+
+    # Convert elevation map to PyTorch tensor for compatibility
+    elevation_map = torch.tensor(elevation_map, dtype=torch.float32)
+
+    # Define neighbor offsets (8 directions: N, NE, E, SE, S, SW, W, NW)
+    neighbor_offsets = [
+        (-1, 0),  # North
+        (-1, 1),  # North-East
+        (0, 1),   # East
+        (1, 1),   # South-East
+        (1, 0),   # South
+        (1, -1),  # South-West
+        (0, -1),  # West
+        (-1, -1)  # North-West
+    ]
+
+    # Initialize routed flow matrix
+    routed_flow = torch.zeros_like(flow_matrix)
+
+    # Iterate over each batch and time step
+    for batch in range(batch_size):
+        # Get the flow for the current time step
+        current_flow = flow_matrix[batch]
+
+        # Iterate over each cell in the grid
+        for y in range(height):
+            for x in range(width):
+                # Skip if the current cell has no flow
+                if current_flow[y, x] == 0:
+                    continue
+
+                # Find the steepest downhill neighbor
+                steepest_slope = 0
+                target_y, target_x = y, x  # Default to the current cell
+
+                for dy, dx in neighbor_offsets:
+                    ny, nx = y + dy, x + dx
+
+                    # Check if the neighbor is within bounds
+                    if 0 <= ny < height and 0 <= nx < width:
+                        # Calculate the slope to the neighbor
+                        slope = elevation_map[y, x] - elevation_map[ny, nx]
+
+                        # Update the steepest slope and target cell
+                        if slope > steepest_slope:
+                            steepest_slope = slope
+                            target_y, target_x = ny, nx
+
+                # Route the flow to the target cell
+                routed_flow[batch, target_y, target_x] += current_flow[y, x]
+
+    return routed_flow
+
+
+def read_rst_to_array_with_custom_size(rst_file_path, target_width, target_height):
+    """
+    Reads an .rst file using rasterio and resamples it to a custom width and height.
+
+    Args:
+        rst_file_path (str): Path to the .rst file.
+        target_width (int): Desired width of the output array.
+        target_height (int): Desired height of the output array.
+
+    Returns:
+        np.ndarray: A 2D numpy array with shape (target_height, target_width) containing elevation data.
+    """
+    try:
+        # Open the .rst file using rasterio
+        with rasterio.open(rst_file_path) as src:
+            # Calculate the resampling scale factors
+            scale_width = target_width / src.width
+            scale_height = target_height / src.height
+
+            # Resample the raster data to the desired dimensions
+            elevation_array = src.read(
+                1,  # Read the first band (elevation data)
+                out_shape=(target_height, target_width),
+                resampling=Resampling.bilinear  # Use bilinear resampling for smoother results
+            )
+
+        return elevation_array
+
+    except Exception as e:
+        print(f"An error occurred while reading the .rst file: {e}")
+        return None
+    
 if __name__ == "__main__":
     main()

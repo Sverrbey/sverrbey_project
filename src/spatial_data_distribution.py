@@ -156,8 +156,17 @@ def inverse_distance_weighting(points, measurements, x_grid, y_grid, power):
         for x in x_grid:
             distances = np.sqrt((x - xs)**2 + (y - ys)**2)
             weights = 1.0 / distances**power
-            z = np.nansum(weights * measurements) / np.nansum(weights)
-            zs.append(z)
+
+            # Safeguard against division by zero or NaN
+            denominator = np.nansum(weights)
+            if denominator == 0 or np.isnan(denominator):
+                z = np.nan  # Assign NaN or a default value
+                zs.append(z)
+            else:
+                z = np.nansum(weights * measurements) / denominator
+                zs.append(z)
+           
+            
     """ Alternative
     for i, y in enumerate(y_grid):
         for j, x in enumerate(x_grid):
@@ -168,5 +177,47 @@ def inverse_distance_weighting(points, measurements, x_grid, y_grid, power):
     """
     return np.array(zs).reshape(len(y_grid), len(x_grid))
 
+def create_parameter_matrix(df_parameter, extent=(1, 1, 1, 1), spacing=100):
+    """ 
+    For each of the parameter values, create a grid of values, that a LSTM can alter the values of each cell
+    and then the model can use these values to calculate the discharge using a physical model. """
 
+    # Calculate the number of grid points based on the spacing
+    num_points_x = int((extent[1] - extent[0]) / spacing) + 1
+    num_points_y = int((extent[3] - extent[2]) / spacing) + 1
 
+    # Initialize an empty grid for parameter values
+    parameter_grid = np.zeros((num_points_y, num_points_x))
+    
+    # Iterate over each parameter and create a grid of values
+    for param in df_parameter.columns:
+        for cal in df_parameter[param]["calibration"]:
+            parameter_grid = cal
+
+    df_parameter[param]["grid"] = parameter_grid
+    return df_parameter
+
+def monte_carlo(df_parameter, extent=(1, 1, 1, 1), spacing=100):
+    """ 
+    The monte carlo simulation is used to create a grid of values for each parameter,
+    that are randomly generated within the specified intervals.
+
+    This will be used during training to create a grid of random values for each parameter.
+    Then based on the output data the model is asked to train on the data and learn which values
+    for the parameters lead to the least amount of losses. 
+    """
+
+    # Calculate the number of grid points based on the spacing
+    num_points_x = int((extent[1] - extent[0]) / spacing) + 1
+    num_points_y = int((extent[3] - extent[2]) / spacing) + 1
+    # Create a grid of points
+    grid_x, grid_y = np.meshgrid(np.linspace(extent[0], extent[1], num_points_x), np.linspace(extent[2], extent[3], num_points_y))
+
+    # Generate random values for each parameter within the specified intervals
+    for param in df_parameter.columns:
+        min_val, max_val = df_parameter[param]["interval"]
+        # for each cell in the grid assign a random value given the interval
+        for y in grid_y:
+            for x in grid_x:
+                    random_value = np.random.uniform(min_val, max_val)
+                    df_parameter[param]["grid"][x, y] = random_value 

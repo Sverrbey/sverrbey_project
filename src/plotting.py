@@ -76,6 +76,7 @@ def plot_interpolation(grid_list, day, points, path, extent, title):
     # Plot the interpolated grid for the first time step
     plt.rcParams["figure.figsize"] = (20, 7)
     grid_plot = grid_list[day-1]
+    grid_plot = np.array(grid_plot, dtype=np.float64)
     plt.imshow(grid_plot, extent=(extent[0], extent[1], extent[2], extent[3]), origin='lower', cmap='viridis')
     #plt.colorbar(label='Interpolated Value')
     plt.scatter(*zip(*points.values()), color='red', label='Known Data Points')

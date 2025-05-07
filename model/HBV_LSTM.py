@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
 
-class LSTM(nn.Module):
-    def __init__(self, input_channels, height, width, hidden_size, output_size, num_layers=1, dropout=0.3):
-        super(LSTM, self).__init__()
+class HBV_LSTM(nn.Module):
+    def __init__(self, input_channels, output_channels, height, width, hidden_size, num_layers=1, dropout=0.3):
+        super(HBV_LSTM, self).__init__()
         
         # Flatten spatial dimensions (height * width) into a single feature vector
         self.input_size = input_channels * height * width
-        
+        self.output_size = output_channels* height * width
         # LSTM layer
         self.lstm = nn.LSTM(
             input_size=self.input_size,  # Flattened input size
@@ -19,7 +19,12 @@ class LSTM(nn.Module):
         )
         
         # Fully connected layer for final output
-        self.fc = nn.Linear(hidden_size, output_size)
+        self.fc = nn.Linear(hidden_size, self.output_size)
+
+        # Save dimensions for reshaping
+        self.output_channels = output_channels
+        self.height = height
+        self.width = width
 
     def forward(self, x):
         # Input shape: (batch_size, seq_length, channels, height, width)
@@ -31,10 +36,16 @@ class LSTM(nn.Module):
         # Pass through LSTM
         lstm_out, _ = self.lstm(x)  # Output shape: (batch_size, seq_length, hidden_size)
         
+        # Pass through LSTM
+        lstm_out, _ = self.lstm(x)  # Output shape: (batch_size, seq_length, hidden_size)
+        
         # Take the output of the last time step
         out = lstm_out[:, -1, :]  # Shape: (batch_size, hidden_size)
         
         # Pass through the fully connected layer
-        out = self.fc(out)  # Shape: (batch_size, output_size)
+        out = self.fc(out)  # Shape: (batch_size, seq_length, output_channels * height * width)
+        
+        # Reshape to (batch_size, seq_length, output_channels, height, width)
+        #out = out.view(batch_size, seq_length, self.output_channels, self.height, self.width)
         
         return out
