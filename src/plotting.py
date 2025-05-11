@@ -32,14 +32,14 @@ def plot_sensitivity(model, dataloader, scaler_y, number):
         plt.plot(actuals[:, 1], color='red')
         plt.plot(predictions[:, 1], label=f'Predicted Data [{2**(3+number)}]', linestyle='--')
 
-def plot_predictions_vs_actuals(model, dataloader, scaler_y, name):
+def plot_predictions_vs_actuals(model, dataloader, scaler_y, scaler_x, name):
     model.eval()
     predictions = []
     actuals = []
     
     with torch.no_grad():
         for batch_x, batch_y in dataloader:
-            outputs = model(batch_x)
+            outputs = model(batch_x, scaler_x)
             predictions.append(outputs.cpu().numpy())
             actuals.append(batch_y.cpu().numpy())
     
@@ -88,3 +88,14 @@ def plot_interpolation(grid_list, day, points, path, extent, title):
     plt.title(title + ': 2D Interpolated Data Representation using IDW : Day ' + str(day))
     plt.grid()
     plt.savefig(path + '/' + title + '_day_' + str(day) + '.png')
+
+def plot_interpolation_routing(grid_list, extent, title):
+    plt.rcParams["figure.figsize"] = (20, 7)
+    grid_plot = grid_list.detach().cpu().numpy()
+    grid_plot = np.array(grid_plot, dtype=np.float64)
+    plt.imshow(grid_plot, extent=(extent[0], extent[1], extent[2], extent[3]), origin='lower', cmap='viridis')
+    #plt.colorbar(label='Interpolated Value')
+    plt.title(title + ': 2D Routing Data from HBV Model')
+    plt.grid()
+    #plt.savefig(path + '/' + title + '.png')
+    plt.show()
