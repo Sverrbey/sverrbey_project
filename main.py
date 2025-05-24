@@ -29,10 +29,12 @@ import rasterio
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from sklearn.preprocessing  import MinMaxScaler
 from torch.utils.data       import DataLoader, TensorDataset
 from model.HBV              import HBV_Model
+#from model.HBV_enhanced     import HBV_Enhanced
 from model.LSTM             import LSTM
 from model.HBV_LSTM         import HBV_LSTM
 from model.CNN_LSTM         import CNN_LSTM_Model
@@ -41,7 +43,7 @@ from src.spatial_data_distribution import reformat_data_stryn, reformat_data_gau
 from src.topology           import generate_contour_map
 from rasterio.enums         import Resampling
 
-from src.plotting           import plot_sensitivity, plot_predictions_vs_actuals, plot_interpolation, plot_interpolation_routing
+from src.plotting           import *
 
 #train_model
 #filter_valid_indices
@@ -121,6 +123,18 @@ def main ():
     stryn_file_paths = [perc_file_path, disch_file_path, temp_file_path, evap_file_path]
     gaula_file_paths = [perc_file_path, disch_file_path, temp_file_path, rad_file_path, hyd_file_path, relHum_file_path, wind_file_path]
 
+    if chosenCatchment == 'Stryn':
+        """ Exploratory Data Analysis """    
+        
+        #EDA(exp_data, exp_df, exp_y_data, exp_y_df)
+
+    elif chosenCatchment == 'Gaula':
+        """ Exploratory Data Analysis """
+        EDA_prec = np.array(list(perc_values.values()))
+        EDA_temp = np.array(list(temp_values.values()))
+        EDA_disc = np.array(list(disch_values.values()))
+    
+        EDA(EDA_prec, EDA_temp, EDA_disc)
 
     # Check if the files exist or interpolate data
     if chosenCatchment == 'Stryn' and any(not os.path.exists(file) for file in stryn_file_paths):
@@ -257,8 +271,9 @@ def main ():
 
         # Stack the features along the last axis
         combined_data = np.stack([perc_data_reshaped, temp_data_reshaped, rad_data_reshaped, hyd_data_reshaped, relHum_data_reshaped, wind_data_reshaped], axis=-1)  # Shape: (num_samples, height * width, input_channels)
+        #combined_data = np.stack([perc_data_reshaped, temp_data_reshaped], axis=-1)  # Shape: (num_samples, height * width, input_channels)
         combined_data = combined_data.reshape(num_samples, -1)  # Flatten spatial dimensions for normalization
-
+        
     train_dataloader, val_dataloader, test_dataloader, scaler_x, scaler_y  = preprocess_data(combined_data, y_data, perc_data.shape, seq_length, batch_size, channels = input_channels)
 
     # Load the saved model state dict
@@ -296,45 +311,29 @@ def main ():
     elev_array = read_rst_to_array_with_custom_size(elevation_path, width, height)
     
     calibration_data = 'data/Gaula/Calib1.txt'
-    calib = 'Copied_Calib1.csv'
+    calib = 'HBV_parameters.csv'
     df_calibration = pd.read_csv(calib, header=None, encoding='latin1', delimiter=',')
     #print(df_calibration)
     #columns_interest = ["SurfaceLayer","GlacierAlb","BETA","k2","k1","k0","perc"]
     #df_calibration = df_calibration[columns_interest]
 
 
-
     df_parameter = pd.DataFrame()
-    df_parameter[0] = {"interval": (1.3-0.3,1.30+0.3)}      # TT  
-    df_parameter[1] = {"interval": (0.05-0.01, 0.05+0.01)}  # CFR
-    df_parameter[2] = {"interval": (5.0-1.0,6.0+1.0)}       # CFMAX
-    df_parameter[3] = {"interval": (185+10,185 +10)}        # FC
-    df_parameter[4] = {"interval": (69-10,69+10)}           # UZL
-    df_parameter[5] = {"interval": (0.01-0.07,0.01+0.07)}   # K0
-    df_parameter[6] = {"interval": (0.15-0.01,0.15+0.01)}   # K1
-    df_parameter[7] = {"interval": (0.4-0.5,0.4+0.5)}       # K2
-    df_parameter[8] = {"interval": (0.5-0.5,0.5+0.5)}       # PERC
-    df_parameter[9] = {"interval": (1.2-0.05,1.2+0.05)}     # CN
-    df_parameter[10] = {"interval": (3.0-1.,3.+1.)}         # BETA
-    df_parameter[11] = {"interval": (125.0-5.0,125.0+5.0)}  # LP
+    df_parameter[0] = {"interval": (    1.3  -   0.3  ,   1.30  +   0.3     )}  # TT  
+    df_parameter[1] = {"interval": (    0.05 -   0.01 ,   0.05  +   0.01    )}  # CFR
+    df_parameter[2] = {"interval": (    5.   -   1.   ,   6.    +   1.      )}  # CFMAX
+    df_parameter[3] = {"interval": (  185.   -  10.   , 185.    +   10.     )}  # FC
+    df_parameter[4] = {"interval": (   69.   -  10.   ,  69.    +   10.     )}  # UZL
+    df_parameter[5] = {"interval": (    0.01 -   0.007,   0.01  +   0.007   )}  # K0
+    df_parameter[6] = {"interval": (    0.15 -   0.01 ,   0.15  +   0.01    )}  # K1
+    df_parameter[7] = {"interval": (    0.4  -   0.05 ,   0.4   +   0.05    )}  # K2
+    df_parameter[8] = {"interval": (    0.5  -   0.05 ,   0.5   +   0.05    )}  # PERC
+    df_parameter[9] = {"interval": (    1.2  -   0.05 ,   1.2   +   0.05    )}  # CN
+    df_parameter[10] = {"interval": (   3.   -   1.   ,   3.    +   1.      )}  # BETA
+    df_parameter[11] = {"interval": ( 125.   -   5.   , 125.    +   5.      )}  # LP
 
-    output_channels = df_parameter.shape[1]
-    hidden_size = input_channels * height * width
-    num_layers = 2
-    dropout = dropout
-    model  = HBV_LSTM(input_channels, output_channels, height, width, hidden_size, elev_array, points, df_parameter, num_layers=num_layers, dropout = dropout)
-    train_model_v2(model, train_dataloader, output_channels, height, width, extent, val_dataloader, 'version_2', scaler_y, scaler_x)
+    #train_dataloader_e, val_dataloader_e, test_dataloader_e  = preprocess_data_enhanced(combined_data, y_data, perc_data.shape, seq_length, batch_size, channels = input_channels)
     
-    
-    ## Load the saved state dictionaries
-    #checkpoint = torch.load('/Users/SverreB/Github_Repo/sverrbey_project/model/save/version_2.pth')    
-
-    ## Load parameters for both models
-    #model.load_state_dict(checkpoint['hbv_lstm_state_dict'])
-    #model.hbv_model.load_state_dict(checkpoint['hbv_model_state_dict'])
-    
-    plot_predictions_vs_actuals(model, test_dataloader, scaler_y, scaler_x, 'HBV-LSTM')
-
 def preprocess_data(combined_data, y_data, input_size, seq_length, batch_size,channels=3, train_split=0.7, validation_split=0.15, test_split=0.15):
     """
     * Process the data for training, validation, and testing.
@@ -410,12 +409,81 @@ def preprocess_data(combined_data, y_data, input_size, seq_length, batch_size,ch
 
     return train_dataloader, val_dataloader, test_dataloader, scaler_x, scaler_y
 
-def train_model(model, train_dataloader, val_dataloader, name, scaler_y, num_epochs=100, learning_rate=0.001):
+def preprocess_data_enhanced(combined_data, y_data, input_size, seq_length, batch_size,channels=3, train_split=0.7, validation_split=0.15, test_split=0.15):
     """
-    Train the CNN_LSTM model.
+    * Process the data for training, validation, and testing.
+    * This function normalizes the input data, creates sequences, and splits the data into training,
+    validation, and testing sets.
 
     Args:
-        model: The CNN_LSTM model to train.
+        combinde_data: Combined input data (shape: [num_samples, height * width * channels]).
+        y_data: Target data, discharge (shape: [num_samples, num_targets]).
+        seq_length: Sequence length for LSTM.
+        batch_size: Batch size for DataLoader.
+        train_split: Fraction of data to use for training.
+        validation_split: Fraction of data to use for validation.
+        test_split: Fraction of data to use for testing.
+
+    Returns:
+        train_dataloader, val_dataloader, test_dataloader, scaler_x, scaler_y
+    """
+    num_samples, height, width = input_size
+    # Initialize scalers
+  
+    # Fit scalers on the training portion of the data
+    train_end = int(train_split * num_samples)
+    val_end = train_end + int(validation_split * num_samples)
+
+
+    # Reshape combined_data back to 3D (spatial dimensions restored)
+    combined_data = combined_data.reshape(num_samples, channels, height, width)  # 2 channels: precipitation, temperature
+
+    # Create sequences for x_data and y_data
+    x_sequences, y_sequences = [], []
+    for i in range(len(combined_data) - seq_length + 1):
+        x_seq = combined_data[i:i+seq_length]  # Sequence of length `seq_length`
+        y_seq = y_data[i+seq_length-1]         # Target corresponds to the last time step
+        x_sequences.append(x_seq)
+        y_sequences.append(y_seq)
+
+    # Convert the lists to NumPy arrays
+    x_sequences = np.array(x_sequences)  # Shape: (num_sequences, seq_length, 2, height, width)
+    y_sequences = np.array(y_sequences)  # Shape: (num_sequences, num_targets)
+
+    # Split the data into train, validation, and test sets
+    num_sequences = len(x_sequences)
+    train_end = int(train_split * num_sequences)
+    val_end = train_end + int(validation_split * num_sequences)
+
+    x_train, x_val, x_test = x_sequences[:train_end], x_sequences[train_end:val_end], x_sequences[val_end:]
+    y_train, y_val, y_test = y_sequences[:train_end], y_sequences[train_end:val_end], y_sequences[val_end:]
+
+    # Convert to PyTorch tensors
+    x_train = torch.tensor(x_train, dtype=torch.float32)
+    y_train = torch.tensor(y_train, dtype=torch.float32)
+    x_val = torch.tensor(x_val, dtype=torch.float32)
+    y_val = torch.tensor(y_val, dtype=torch.float32)
+    x_test = torch.tensor(x_test, dtype=torch.float32)
+    y_test = torch.tensor(y_test, dtype=torch.float32)
+
+    # Create DataLoaders
+    train_dataset = TensorDataset(x_train, y_train)
+    val_dataset = TensorDataset(x_val, y_val)
+    test_dataset = TensorDataset(x_test, y_test)
+
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+    return train_dataloader, val_dataloader, test_dataloader
+
+
+def train_model(model, train_dataloader, val_dataloader, name, scaler_y, num_epochs=100, learning_rate=0.001):
+    """
+    Train the ML model.
+
+    Args:
+        model: The ML model to train.
         train_dataloader: DataLoader for training data.
         val_dataloader: DataLoader for validation data.
         name: Name to save the trained model.
@@ -453,7 +521,7 @@ def train_model(model, train_dataloader, val_dataloader, name, scaler_y, num_epo
             # Forward pass
             outputs = model(batch_x)
             loss = criterion(outputs, batch_y)
-
+            
             # Backward pass and optimization
             optimizer.zero_grad()
             loss.backward()
@@ -511,8 +579,8 @@ def train_model(model, train_dataloader, val_dataloader, name, scaler_y, num_epo
 
         # Print epoch results
         print(f"Epoch [{epoch+1}/{num_epochs}], Train Loss: {train_loss:.4f}, Train NSE: {train_nse:.4f}, Val Loss: {val_loss:.4f}, Val NSE: {val_nse:.4f}")
-        print(f"Train RMSE: {train_rmse:.4f}, Train MAE: {train_mae:.4f}, Train MAPE: {train_mape:.4f}, Train R^2: {train_r_squared:.4f}, Train KGE: {train_kge:.4f}, Train Pearson: {train_pearson:.4f}")
-        print(f"Val RMSE: {val_rmse:.4f}, Val MAE: {val_mae:.4f}, Val MAPE: {val_mape:.4f}, Val R^2: {val_r_squared:.4f}, Val KGE: {val_kge:.4f}, Val Pearson: {val_pearson:.4f}")
+        #print(f"Train RMSE: {train_rmse:.4f}, Train MAE: {train_mae:.4f}, Train MAPE: {train_mape:.4f}, Train R^2: {train_r_squared:.4f}, Train KGE: {train_kge:.4f}, Train Pearson: {train_pearson:.4f}")
+        #print(f"Val RMSE: {val_rmse:.4f}, Val MAE: {val_mae:.4f}, Val MAPE: {val_mape:.4f}, Val R^2: {val_r_squared:.4f}, Val KGE: {val_kge:.4f}, Val Pearson: {val_pearson:.4f}")
         # Early stopping logic
         if val_loss < best_val_loss:
             best_val_loss = val_loss
@@ -530,6 +598,7 @@ def train_model(model, train_dataloader, val_dataloader, name, scaler_y, num_epo
     # Save the final model
     torch.save(model.state_dict(), '/Users/SverreB/Github_Repo/sverrbey_project/model/save/' + name + '.pth')
     return model
+
 
 def train_model_v2(model, train_dataloader, channels, height, width, extent, val_dataloader, name, scaler_y, scaler_x, num_epochs=100, learning_rate=0.001):
     """
