@@ -16,4 +16,7 @@ data/graphs/
 *.nat
 *.json
 *.shp
+*.dbf
 src/data/Norway_shapefile/*.shp
+src/data/Norway_shapefile/*.dbf
+src/data/Norway_shapefile/*.prj
