@@ -9,14 +9,12 @@ __pycache__/
 *.DS_Store
 *.ipynb_checkpoints/
 model/save/
-src/data/interpolated_spatial_data/*.json
-src/data/Stryn/*.tiff
+data/interpolated_spatial_data/*.json
+data/Stryn/*.tiff
 data/graphs/
 *.tiff
 *.nat
 *.json
 *.shp
 *.dbf
-src/data/Norway_shapefile/*.shp
-src/data/Norway_shapefile/*.dbf
-src/data/Norway_shapefile/*.prj
+data/Norway_shapefile/*
