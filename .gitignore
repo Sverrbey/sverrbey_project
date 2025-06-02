@@ -15,3 +15,4 @@ data/graphs/
 *.tiff
 *.nat
 *.json
+*.shp
