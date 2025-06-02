@@ -19,7 +19,7 @@ are chosen.
 ?- If the data includes some time series data that is updated with regular frequency this updating interval
 needs to be specified in the code.
 
-TODO: Predict future values. Start with a graphical representation
+HydAPI key: bq5Ny6WGYkK5ySwwkqjCBQ==
 
 """
 # Import necessary libraries & models
@@ -30,28 +30,29 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pyproj
 
 from sklearn.preprocessing  import MinMaxScaler
 from torch.utils.data       import DataLoader, TensorDataset
+from rasterio.enums         import Resampling
+
 from model.HBV              import HBV_Model
-#from model.HBV_enhanced     import HBV_Enhanced
 from model.LSTM             import LSTM
 from model.HBV_LSTM         import HBV_LSTM
 from model.CNN_LSTM         import CNN_LSTM_Model
 from model.CNN              import CNN
-from src.spatial_data_distribution import reformat_data_stryn, reformat_data_gaula
-from src.topology           import generate_contour_map
-from rasterio.enums         import Resampling
+
 
 from src.plotting           import *
+from src.evaluation_metrics import *
+from src.topology           import *
+from src.spatial_data_distribution import *
+from src.functions          import *
+from src.UKMO_download      import *
+from src.HydAPI_download    import *
 
-#train_model
-#filter_valid_indices
-#extract_info
-#catchment_styrn, catchment_gaula
-
-#preprocess_data 
-#reformat_elevation_map
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device:", device)
 
 def main ():
     """
@@ -77,12 +78,14 @@ def main ():
     be generated based on the historical accuracy of the model to predict the future trends. 
     
     """
+    
+    #Create a list of longitudes and latitudes for the catchment area
 
-   
     # Pick of catchment
-    chosenCatchment = 'Gaula' # 'Stryn' or 'Gaula'
+    chosenCatchment = 'Stryn' # 'Stryn' or 'Gaula'
+
     if chosenCatchment == 'Stryn':
-        resolution  = 4000  # Spacing between grid points (e.g., 4000 m)
+        spacing  = 4000  # Spacing between grid points (e.g., 4000 m)
         number_days = 6*365 #  max 42 years (80-22)
         # Timeseries
         points, perc_values, temp_values, evap_values, disch_values, dates = catchment_styrn(number_days)
@@ -90,11 +93,72 @@ def main ():
         # Area description 
         x_limit = (min(points.values(), key=lambda p: p[0])[0], max(points.values(), key=lambda p: p[0])[0])
         y_limit = (min(points.values(), key=lambda p: p[1])[1], max(points.values(), key=lambda p: p[1])[1])
-        x_degrees   = (6.45811333, 7.33417667) # (6°27'29.208", 7°20'3.036")
+        x_degrees   = ( 6.45811333,  7.33417667) # (6°27'29.208", 7°20'3.036")
         y_degrees   = (61.75932639, 62.06398778) #(61°45'33.575", 62°3'50.356")
         extent      = (x_limit[0], x_limit[1], y_limit[0], y_limit[1])  
         
+
+        # Hydrological and Meterological data
+        hyd_station = {
+            "STNR": "88.15.0,88.11.0",
+            "parameter": "1001",
+            "filepath": "data/hourly_data/insitu_discharge.json"
+        }
+
+        prec_station = {
+            "STNR": "98.4.0",
+            "parameter": "9160",
+            "filepath": "data/hourly_data/insitu_prec.json"
+        }
+
+        temp_station = {
+            "STNR": "88.50.7,88.11.0,88.48.5,88.35.0,88.33.0,88.51.6,88.24.0,98.4.0,88.23.0,88.3.0,88.24.0",
+            "parameter": "17",
+            "filepath": "data/hourly_data/insitu_temp.json"
+        }
+
+        api_key = "bq5Ny6WGYkK5ySwwkqjCBQ=="
+
+        disc_argv = [
+            "-a", api_key,
+            "-s", hyd_station["STNR"],
+            "-p", hyd_station["parameter"],
+            "-r", 60,
+            "-t", "2023-05-17/2025-05-31"
+        ]
+
+        data_folder_path = "data/hourly_data"
+        has_data = any(
+            file.startswith("insitu_") and file.endswith(".json")
+            for file in os.listdir(data_folder_path)
+        )
+
+        if not has_data:
+            get_observations(disc_argv,hyd_station["STNR"],filepath=hyd_station["filepath"])
+       
+        # Satelite Forecast
+        long_list, lat_list, width, height = create_grid(x_degrees, y_degrees, 4) # Create a grid of points
+
+        #Create interpolated satellite data
+        start_date = "2023-05-17"
+        end_date   = "2025-05-31"
+        data_folder_path = "data/interpolated_spatial_data"
+        sat_file_paths = [
+            'data/interpolated_spatial_data/sat_perc_spatial.json',
+            'data/interpolated_spatial_data/sat_temp.json'
+        ]
         
+        
+        # Check if the data folder contains any .json files for the given period
+        has_data = any(
+            file.startswith("sat_") and file.endswith(".json")
+            for file in os.listdir(data_folder_path)
+        )
+
+        if not has_data:
+            create_satellite_data(long_list, lat_list, start_date, end_date, width, height, extent, sat_file_paths)
+        
+
     elif chosenCatchment == 'Gaula':
         spacing     = 8000  # Spacing between grid points (e.g., 4000 m)
         number_days = 6*365 # max 6 years (99-05)
@@ -107,6 +171,7 @@ def main ():
         y_degrees   = (0, 0) #(61°45'33.575", 62°3'50.356")
         extent      = (x_limit[0], x_limit[1], y_limit[0], y_limit[1])  
         
+
     # X data
     perc_file_path  = 'data/interpolated_spatial_data/perc_spatial.json'
     temp_file_path  = 'data/interpolated_spatial_data/temp.json'
@@ -123,39 +188,40 @@ def main ():
     stryn_file_paths = [perc_file_path, disch_file_path, temp_file_path, evap_file_path]
     gaula_file_paths = [perc_file_path, disch_file_path, temp_file_path, rad_file_path, hyd_file_path, relHum_file_path, wind_file_path]
 
-    if chosenCatchment == 'Stryn':
-        """ Exploratory Data Analysis """    
-        
-        #EDA(exp_data, exp_df, exp_y_data, exp_y_df)
-
-    elif chosenCatchment == 'Gaula':
-        """ Exploratory Data Analysis """
-        EDA_prec = np.array(list(perc_values.values()))
-        EDA_temp = np.array(list(temp_values.values()))
-        EDA_disc = np.array(list(disch_values.values()))
-    
-        EDA(EDA_prec, EDA_temp, EDA_disc)
 
     # Check if the files exist or interpolate data
-    if chosenCatchment == 'Stryn' and any(not os.path.exists(file) for file in stryn_file_paths):
-        # Generate the grid using IDW
-        reformat_data_stryn(points, perc_values, temp_values, evap_values, disch_values, number_days, dates, stryn_file_paths, extent=extent, spacing=spacing, power=2)
-    elif chosenCatchment == 'Gaula' and any(not os.path.exists(file) for file in gaula_file_paths):
-        # Generate the grid using IDW
-        reformat_data_gaula(points_gaula, perc_values, temp_values, rad_values, hyd_values, relHum_values, wind_values, disch_values, number_days, dates, gaula_file_paths, extent=extent, spacing=spacing, power=2)
+    #if chosenCatchment == 'Stryn' and any(not os.path.exists(file) for file in stryn_file_paths):
+    #    # Generate the grid using IDW
+    #    reformat_data_stryn(points, perc_values, temp_values, evap_values, disch_values, number_days, dates, stryn_file_paths, extent=extent, spacing=spacing, power=2)
+    #elif chosenCatchment == 'Gaula' and any(not os.path.exists(file) for file in gaula_file_paths):
+    #    # Generate the grid using IDW
+    #    reformat_data_gaula(points_gaula, perc_values, temp_values, rad_values, hyd_values, relHum_values, wind_values, disch_values, number_days, dates, gaula_file_paths, extent=extent, spacing=spacing, power=2)
     
 
     # Reading the interpolated data
     if chosenCatchment == 'Stryn':
-        df_perc     = pd.read_json(perc_file_path, orient='values')
-        df_disch    = pd.read_json(disch_file_path, orient='values')
-        df_temp     = pd.read_json(temp_file_path, orient='values')
-        df_evap     = pd.read_json(evap_file_path, orient='values')
+        #df_perc     = pd.read_json(perc_file_path, orient='values')
+        #df_disch    = pd.read_json(disch_file_path, orient='values')
+        #df_temp     = pd.read_json(temp_file_path, orient='values')
+        #df_evap     = pd.read_json(evap_file_path, orient='values')
+#
+        #df_perc.columns     = ["Date", "interpolated_perc"]
+        #df_disch.columns    = ["Date", "discharge"]
+        #df_temp.columns     = ["Date", "interpolated_temp"]
+        #df_evap.columns     = ["Date", "interpolated_evap"]   
 
-        df_perc.columns     = ["Date", "interpolated_perc"]
-        df_disch.columns    = ["Date", "discharge"]
-        df_temp.columns     = ["Date", "interpolated_temp"]
-        df_evap.columns     = ["Date", "interpolated_evap"]
+        # Reading the insitu data
+        df_disch_insitu = pd.read_json(hyd_station["filepath"], orient='index')
+        # Convert all values to a numpy array (each row as an array)
+        df_disch_insitu["insitu_discharge"] = df_disch_insitu.apply(lambda row: np.array(row.values), axis=1)
+        df_disch_insitu = df_disch_insitu.drop(df_disch_insitu.columns[[0, 1]], axis=1)
+
+        #Satellite data
+        df_sat_prec     = pd.read_json(sat_file_paths[0], orient='index')
+        df_sat_temp     = pd.read_json(sat_file_paths[1], orient='index')
+        df_sat_prec.columns     = ["sat_precipitation"]
+        df_sat_temp.columns     = ["sat_temperature"]  
+
     elif chosenCatchment == 'Gaula':
         df_perc     = pd.read_json(perc_file_path, orient='values')
         df_disch    = pd.read_json(disch_file_path, orient='values')
@@ -176,38 +242,51 @@ def main ():
     # Defining the model parameters and valid data
     if chosenCatchment == 'Stryn':
         # Assuming x_data and y_data are your input and target data
-        perc_data   = np.array(df_perc['interpolated_perc'].tolist())
-        temp_data   = np.array(df_temp['interpolated_temp'].tolist())
-        evap_data   = np.array(df_evap['interpolated_evap'].tolist())
-        y_data      = np.array(df_disch['discharge'].tolist())
+        #perc_data   = np.array(df_perc['interpolated_perc'].tolist())
+        #temp_data   = np.array(df_temp['interpolated_temp'].tolist())
+        #evap_data   = np.array(df_evap['interpolated_evap'].tolist())
+        #y_data      = np.array(df_disch['discharge'].tolist())
+#
+        ## Mask rows where any feature in y_data is equal to -99.0 and the sequence length isn't possible
+        #seq_length = 7
+        #valid_indices = filter_valid_indices(y_data, seq_length) 
+        #perc_data = perc_data[valid_indices]
+        #temp_data = temp_data[valid_indices]
+        #evap_data = evap_data[valid_indices]
+        #y_data = y_data[valid_indices]
+#
+        ## Extract the second column and keep it as 2D
+        #y_data = y_data[:, [0,1]]  # Shape: (num_samples, 1)   
 
-        # Mask rows where any feature in y_data is equal to -99.0 and the sequence length isn't possible
-        seq_length = 7
-        valid_indices = filter_valid_indices(y_data, seq_length) 
-        perc_data = perc_data[valid_indices]
-        temp_data = temp_data[valid_indices]
-        evap_data = evap_data[valid_indices]
-        y_data = y_data[valid_indices]
 
-        # Replace NaN values in y_data with 0
-        #y_data = np.nan_to_num(y_data, nan=0.0001)
+        #Satellite data
+        sat_seq_length = 24 #h
+
+        sat_prec_data   = np.array(df_sat_prec["sat_precipitation"].tolist())
+        sat_prec_data   = sat_prec_data[:-23]
+        sat_temp_data   = np.array(df_sat_temp["sat_temperature"].tolist())
+        sat_temp_data   = sat_temp_data[:-23]
+
+        y_data_sat      = np.array(df_disch_insitu["insitu_discharge"].tolist())
+        #y_data_sat      = y_data_sat[:-1]
         
-        # Extract the second column and keep it as 2D
-        y_data = y_data[:, [0,1]]  # Shape: (num_samples, 1)   
-
-        perc_data_shape = perc_data.shape[1:3]   
-        #elev_data = reformat_elevation_map(elevation_tiff_path, perc_data_shape)
+        valid_indices = filter_valid_indices(y_data_sat, sat_seq_length) 
+        sat_prec_data = sat_prec_data[valid_indices]
+        sat_temp_data = sat_temp_data[valid_indices]
+        y_data_sat = y_data_sat[valid_indices]
         
-        num_layers      = 4  # Increase the number of LSTM layers
+        y_data_sat = y_data_sat[:, [0,1]]  # Shape: (num_samples, 1)
+
+        num_layers      = 12  # Increase the number of LSTM layers
         dropout         = 0.4  # Adjust the dropout rate
-        batch_size      = 2**6
-        seq_length      = seq_length # days (# Because we're removing some days)
-        input_channels  = 3  # Number of input channels (precipitation, temperature, evaporation)
+        batch_size      = 2**6 # 64
+        #seq_length      = seq_length # days/hours
+        input_channels  = 2  # Number of input channels (precipitation, temperature, evaporation)
         hidden_size     = 256
         output_size     = 2  # Number of target features
-        input_size      = perc_data.shape[1:3]
-        height          = input_size[0]
-        width           = input_size[1]
+        input_size      = (height,width)
+        height          = height
+        width           = width
     elif chosenCatchment == 'Gaula':
         # Assuming x_data and y_data are your input and target data
         perc_data   = np.array(df_perc['interpolated_perc'].tolist())
@@ -244,21 +323,30 @@ def main ():
         height          = input_size[0]
         width           = input_size[1]
 
-    #model_CNN_LSTM  = CNN_LSTM_Model(input_channels, height, width, hidden_size, output_size, num_layers=num_layers, dropout=dropout)
-    #model_CNN       = CNN(input_channels, output_size, hidden_size)
-    model_LSTM       = LSTM(input_channels, height, width, hidden_size, output_size, num_layers=num_layers, dropout = dropout)
+    # Define the model
+    #model_LSTM       = LSTM(input_channels, height, width, hidden_size, output_size, num_layers=num_layers, dropout = dropout)
 
     # Combining the data for training
     if chosenCatchment == 'Stryn':
-        # Reshape perc_data and temp_data to 2D for normalization
-        num_samples, height, width = perc_data.shape
-        perc_data_reshaped = perc_data.reshape(num_samples, -1)  # Shape: (num_samples, height * width)
-        temp_data_reshaped = temp_data.reshape(num_samples, -1)
-        evap_data_reshaped = evap_data.reshape(num_samples, -1)
+        ## Reshape perc_data and temp_data to 2D for normalization
+        #num_samples, height, width = perc_data.shape
+        #perc_data_reshaped = perc_data.reshape(num_samples, -1)  # Shape: (num_samples, height * width)
+        #temp_data_reshaped = temp_data.reshape(num_samples, -1)
+        #evap_data_reshaped = evap_data.reshape(num_samples, -1)
+#
+        ## Stack the features along the last axis
+        #combined_data = np.stack([perc_data_reshaped, temp_data_reshaped, evap_data_reshaped], axis=-1)  # Shape: (num_samples, height * width, 3)
+        #combined_data = combined_data.reshape(num_samples, -1)  # Flatten spatial dimensions for normalization
+        #print("combined_data shape:", combined_data.shape)
+        #Satellite data
+        num_samples, height, width = sat_prec_data.shape
+        sat_perc_data_reshaped = sat_prec_data.reshape(num_samples, -1)  # Shape: (num_samples, height * width)
+        sat_temp_data_reshaped = sat_temp_data.reshape(num_samples, -1)
 
         # Stack the features along the last axis
-        combined_data = np.stack([perc_data_reshaped, temp_data_reshaped, evap_data_reshaped], axis=-1)  # Shape: (num_samples, height * width, 3)
-        combined_data = combined_data.reshape(num_samples, -1)  # Flatten spatial dimensions for normalization
+        sat_combined_data = np.stack([sat_perc_data_reshaped, sat_temp_data_reshaped], axis=-1)  # Shape: (num_samples, height * width, 3)
+        sat_combined_data = sat_combined_data.reshape(num_samples, -1)  # Flatten spatial dimensions for normalization
+
     elif chosenCatchment == 'Gaula':
         # Reshape perc_data and temp_data to 2D for normalization
         num_samples, height, width = perc_data.shape
@@ -273,689 +361,22 @@ def main ():
         combined_data = np.stack([perc_data_reshaped, temp_data_reshaped, rad_data_reshaped, hyd_data_reshaped, relHum_data_reshaped, wind_data_reshaped], axis=-1)  # Shape: (num_samples, height * width, input_channels)
         #combined_data = np.stack([perc_data_reshaped, temp_data_reshaped], axis=-1)  # Shape: (num_samples, height * width, input_channels)
         combined_data = combined_data.reshape(num_samples, -1)  # Flatten spatial dimensions for normalization
-        
-    train_dataloader, val_dataloader, test_dataloader, scaler_x, scaler_y  = preprocess_data(combined_data, y_data, perc_data.shape, seq_length, batch_size, channels = input_channels)
 
+    #train_dataloader, val_dataloader, test_dataloader, scaler_x, scaler_y  = preprocess_data(combined_data, y_data, perc_data.shape, seq_length, batch_size, channels = input_channels)
+    #train_dataloader, val_dataloader, test_dataloader, scaler_x, scaler_y  = preprocess_data(sat_combined_data, y_data_sat, sat_prec_data.shape, sat_seq_length, batch_size, channels = input_channels)
+    
     # Load the saved model state dict
     #model.load_state_dict(torch.load('/Users/SverreB/Github_Repo/sverrbey_project/model/save/CNN_LSTM_1.pth'))
 
+
     # Train the model
-    #model_CNN_LSTM  = train_model(model_CNN_LSTM, train_dataloader, val_dataloader, 'CNN_LSTM_gaula_opt', scaler_y)
-    #model_CNN       = train_model(model_CNN, train_dataloader, val_dataloader, 'CNN_gaula', scaler_y)
-    #model_LSTM      = train_model(model_LSTM, train_dataloader, val_dataloader, 'LSTM_gaula_res_8000', scaler_y)
+    #model_LSTM      = train_model(model_LSTM, train_dataloader, val_dataloader, 'LSTM_gaula_res_sat', scaler_y)
 
     # Load the saved model state dict
-    #model_CNN_LSTM.load_state_dict(torch.load('/Users/SverreB/Github_Repo/sverrbey_project/model/save/CNN_LSTM.pth'))
-    #model_CNN.load_state_dict(torch.load('/Users/SverreB/Github_Repo/sverrbey_project/model/save/CNN.pth'))
     #model_LSTM.load_state_dict(torch.load('/Users/SverreB/Github_Repo/sverrbey_project/model/save/LSTM_gaula_res_8000.pth'))
 
     # Plot predictions vs actuals
-    #plot_predictions_vs_actuals(model_CNN_LSTM, test_dataloader, scaler_y, 'CNN_LSTM_gaula')
-    #plot_predictions_vs_actuals(model_CNN, test_dataloader, scaler_y, 'CNN_gaula')
-    #plot_predictions_vs_actuals(model_LSTM, test_dataloader, scaler_y, 'LSTM_Gaula')
-    
-
-    # TODO: New modeling approach
-    points = []
-    df_discharge    = pd.read_csv('data/Gaula/DailyDischarge_Gaula.txt', header=None, encoding='latin1', delimiter='\t')
-    disch_info, df_discharge  = extract_info(df_discharge, 'point id')
-    for pointID in disch_info.index:
-        x = float(disch_info['Xcoord'][pointID])
-        y = float(disch_info['Ycoord'][pointID])
-
-        j = int((x-x_limit[0]) / spacing)
-        i = int((y-y_limit[0]) / spacing)
-        points.append((i, j))
-    # Parameter data
-    elevation_path = 'data/Gaula/ELEVATION.rst'
-    elev_array = read_rst_to_array_with_custom_size(elevation_path, width, height)
-    
-    calibration_data = 'data/Gaula/Calib1.txt'
-    calib = 'HBV_parameters.csv'
-    df_calibration = pd.read_csv(calib, header=None, encoding='latin1', delimiter=',')
-    #print(df_calibration)
-    #columns_interest = ["SurfaceLayer","GlacierAlb","BETA","k2","k1","k0","perc"]
-    #df_calibration = df_calibration[columns_interest]
-
-
-    df_parameter = pd.DataFrame()
-    df_parameter[0] = {"interval": (    1.3  -   0.3  ,   1.30  +   0.3     )}  # TT  
-    df_parameter[1] = {"interval": (    0.05 -   0.01 ,   0.05  +   0.01    )}  # CFR
-    df_parameter[2] = {"interval": (    5.   -   1.   ,   6.    +   1.      )}  # CFMAX
-    df_parameter[3] = {"interval": (  185.   -  10.   , 185.    +   10.     )}  # FC
-    df_parameter[4] = {"interval": (   69.   -  10.   ,  69.    +   10.     )}  # UZL
-    df_parameter[5] = {"interval": (    0.01 -   0.007,   0.01  +   0.007   )}  # K0
-    df_parameter[6] = {"interval": (    0.15 -   0.01 ,   0.15  +   0.01    )}  # K1
-    df_parameter[7] = {"interval": (    0.4  -   0.05 ,   0.4   +   0.05    )}  # K2
-    df_parameter[8] = {"interval": (    0.5  -   0.05 ,   0.5   +   0.05    )}  # PERC
-    df_parameter[9] = {"interval": (    1.2  -   0.05 ,   1.2   +   0.05    )}  # CN
-    df_parameter[10] = {"interval": (   3.   -   1.   ,   3.    +   1.      )}  # BETA
-    df_parameter[11] = {"interval": ( 125.   -   5.   , 125.    +   5.      )}  # LP
-
-    #train_dataloader_e, val_dataloader_e, test_dataloader_e  = preprocess_data_enhanced(combined_data, y_data, perc_data.shape, seq_length, batch_size, channels = input_channels)
-    
-def preprocess_data(combined_data, y_data, input_size, seq_length, batch_size,channels=3, train_split=0.7, validation_split=0.15, test_split=0.15):
-    """
-    * Process the data for training, validation, and testing.
-    * This function normalizes the input data, creates sequences, and splits the data into training,
-    validation, and testing sets.
-
-    Args:
-        combinde_data: Combined input data (shape: [num_samples, height * width * channels]).
-        y_data: Target data, discharge (shape: [num_samples, num_targets]).
-        seq_length: Sequence length for LSTM.
-        batch_size: Batch size for DataLoader.
-        train_split: Fraction of data to use for training.
-        validation_split: Fraction of data to use for validation.
-        test_split: Fraction of data to use for testing.
-
-    Returns:
-        train_dataloader, val_dataloader, test_dataloader, scaler_x, scaler_y
-    """
-    num_samples, height, width = input_size
-    # Initialize scalers
-    scaler_x = MinMaxScaler()
-    scaler_y = MinMaxScaler()
-
-    # Fit scalers on the training portion of the data
-    train_end = int(train_split * num_samples)
-    val_end = train_end + int(validation_split * num_samples)
-    scaler_x.fit(combined_data[:train_end])
-    scaler_y.fit(y_data[:train_end])  # Fit only on training data
-
-    # Transform the data
-    combined_data_normalized = scaler_x.transform(combined_data)  # Shape: (num_samples, height * width * 3)
-    y_data_normalized = scaler_y.transform(y_data)               # Shape: (num_samples, num_targets)
-
-    # Reshape combined_data back to 3D (spatial dimensions restored)
-    combined_data_normalized = combined_data_normalized.reshape(num_samples, channels, height, width)  # 2 channels: precipitation, temperature
-
-    # Create sequences for x_data and y_data
-    x_sequences, y_sequences = [], []
-    for i in range(len(combined_data_normalized) - seq_length + 1):
-        x_seq = combined_data_normalized[i:i+seq_length]  # Sequence of length `seq_length`
-        y_seq = y_data_normalized[i+seq_length-1]         # Target corresponds to the last time step
-        x_sequences.append(x_seq)
-        y_sequences.append(y_seq)
-
-    # Convert the lists to NumPy arrays
-    x_sequences = np.array(x_sequences)  # Shape: (num_sequences, seq_length, 2, height, width)
-    y_sequences = np.array(y_sequences)  # Shape: (num_sequences, num_targets)
-
-    # Split the data into train, validation, and test sets
-    num_sequences = len(x_sequences)
-    train_end = int(train_split * num_sequences)
-    val_end = train_end + int(validation_split * num_sequences)
-
-    x_train, x_val, x_test = x_sequences[:train_end], x_sequences[train_end:val_end], x_sequences[val_end:]
-    y_train, y_val, y_test = y_sequences[:train_end], y_sequences[train_end:val_end], y_sequences[val_end:]
-
-    # Convert to PyTorch tensors
-    x_train = torch.tensor(x_train, dtype=torch.float32)
-    y_train = torch.tensor(y_train, dtype=torch.float32)
-    x_val = torch.tensor(x_val, dtype=torch.float32)
-    y_val = torch.tensor(y_val, dtype=torch.float32)
-    x_test = torch.tensor(x_test, dtype=torch.float32)
-    y_test = torch.tensor(y_test, dtype=torch.float32)
-
-    # Create DataLoaders
-    train_dataset = TensorDataset(x_train, y_train)
-    val_dataset = TensorDataset(x_val, y_val)
-    test_dataset = TensorDataset(x_test, y_test)
-
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-
-    return train_dataloader, val_dataloader, test_dataloader, scaler_x, scaler_y
-
-def preprocess_data_enhanced(combined_data, y_data, input_size, seq_length, batch_size,channels=3, train_split=0.7, validation_split=0.15, test_split=0.15):
-    """
-    * Process the data for training, validation, and testing.
-    * This function normalizes the input data, creates sequences, and splits the data into training,
-    validation, and testing sets.
-
-    Args:
-        combinde_data: Combined input data (shape: [num_samples, height * width * channels]).
-        y_data: Target data, discharge (shape: [num_samples, num_targets]).
-        seq_length: Sequence length for LSTM.
-        batch_size: Batch size for DataLoader.
-        train_split: Fraction of data to use for training.
-        validation_split: Fraction of data to use for validation.
-        test_split: Fraction of data to use for testing.
-
-    Returns:
-        train_dataloader, val_dataloader, test_dataloader, scaler_x, scaler_y
-    """
-    num_samples, height, width = input_size
-    # Initialize scalers
-  
-    # Fit scalers on the training portion of the data
-    train_end = int(train_split * num_samples)
-    val_end = train_end + int(validation_split * num_samples)
-
-
-    # Reshape combined_data back to 3D (spatial dimensions restored)
-    combined_data = combined_data.reshape(num_samples, channels, height, width)  # 2 channels: precipitation, temperature
-
-    # Create sequences for x_data and y_data
-    x_sequences, y_sequences = [], []
-    for i in range(len(combined_data) - seq_length + 1):
-        x_seq = combined_data[i:i+seq_length]  # Sequence of length `seq_length`
-        y_seq = y_data[i+seq_length-1]         # Target corresponds to the last time step
-        x_sequences.append(x_seq)
-        y_sequences.append(y_seq)
-
-    # Convert the lists to NumPy arrays
-    x_sequences = np.array(x_sequences)  # Shape: (num_sequences, seq_length, 2, height, width)
-    y_sequences = np.array(y_sequences)  # Shape: (num_sequences, num_targets)
-
-    # Split the data into train, validation, and test sets
-    num_sequences = len(x_sequences)
-    train_end = int(train_split * num_sequences)
-    val_end = train_end + int(validation_split * num_sequences)
-
-    x_train, x_val, x_test = x_sequences[:train_end], x_sequences[train_end:val_end], x_sequences[val_end:]
-    y_train, y_val, y_test = y_sequences[:train_end], y_sequences[train_end:val_end], y_sequences[val_end:]
-
-    # Convert to PyTorch tensors
-    x_train = torch.tensor(x_train, dtype=torch.float32)
-    y_train = torch.tensor(y_train, dtype=torch.float32)
-    x_val = torch.tensor(x_val, dtype=torch.float32)
-    y_val = torch.tensor(y_val, dtype=torch.float32)
-    x_test = torch.tensor(x_test, dtype=torch.float32)
-    y_test = torch.tensor(y_test, dtype=torch.float32)
-
-    # Create DataLoaders
-    train_dataset = TensorDataset(x_train, y_train)
-    val_dataset = TensorDataset(x_val, y_val)
-    test_dataset = TensorDataset(x_test, y_test)
-
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-
-    return train_dataloader, val_dataloader, test_dataloader
-
-
-def train_model(model, train_dataloader, val_dataloader, name, scaler_y, num_epochs=100, learning_rate=0.001):
-    """
-    Train the ML model.
-
-    Args:
-        model: The ML model to train.
-        train_dataloader: DataLoader for training data.
-        val_dataloader: DataLoader for validation data.
-        name: Name to save the trained model.
-        seq_length: Sequence length of the input data.
-        num_epochs: Number of epochs to train the model.
-        learning_rate: Learning rate for the optimizer.
-
-    Returns:
-        model: The trained model.
-    """
-    # Define the loss function and optimizer
-    criterion = torch.nn.MSELoss()  # Mean Squared Error Loss
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    
-
-    # Early stopping parameters
-    patience = 15  # Number of epochs to wait for improvement
-    best_val_loss = float('inf')
-    early_stop_counter = 0
-
-    # Training loop
-    for epoch in range(num_epochs):
-        model.train()
-        train_loss = 0.0
-        train_nse = 0.0
-        train_rmse = 0.0
-        train_mae = 0.0
-        train_mape = 0.0
-        train_r_squared = 0.0
-        train_kge = 0.0
-        train_pearson = 0.0
-       
-
-        for batch_x, batch_y in train_dataloader:
-            # Forward pass
-            outputs = model(batch_x)
-            loss = criterion(outputs, batch_y)
-            
-            # Backward pass and optimization
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-            train_loss += loss.item()
-
-            # Denormalize the predictions and true values
-            y_true = scaler_y.inverse_transform(batch_y.detach().cpu().numpy())
-            y_pred = scaler_y.inverse_transform(outputs.detach().cpu().numpy())
-
-            
-            train_nse   += NSE_formula(y_true, y_pred)
-            train_rmse  += RMSE_formula(y_true, y_pred)
-            train_mae   += MAE_formula(y_true, y_pred)
-            train_mape  += MAPE_formula(y_true, y_pred)
-            train_r_squared += R_squared_formula(y_true, y_pred)
-            train_kge   += KGE_formula(y_true, y_pred)
-            train_pearson   += Pearson_formula(y_true, y_pred)
-
-
-        train_loss /= len(train_dataloader)
-        train_nse /= len(train_dataloader)
-
-        # Validation loop
-        model.eval()
-        val_loss = 0.0
-        val_nse  = 0.0
-        val_rmse = 0.0
-        val_mae  = 0.0
-        val_mape = 0.0
-        val_r_squared = 0.0
-        val_kge  = 0.0
-        val_pearson   = 0.0
-        with torch.no_grad():
-            for batch_x, batch_y in val_dataloader:
-                outputs = model(batch_x)
-                loss = criterion(outputs, batch_y)
-                val_loss += loss.item()
-
-                # Denormalize the predictions and true values
-                y_true = scaler_y.inverse_transform(batch_y.detach().cpu().numpy())
-                y_pred = scaler_y.inverse_transform(outputs.detach().cpu().numpy())
-
-                val_nse   += NSE_formula(y_true, y_pred)
-                val_rmse  += RMSE_formula(y_true, y_pred)
-                val_mae   += MAE_formula(y_true, y_pred)
-                val_mape  += MAPE_formula(y_true, y_pred)
-                val_r_squared += R_squared_formula(y_true, y_pred)
-                val_kge   += KGE_formula(y_true, y_pred)
-                val_pearson   += Pearson_formula(y_true, y_pred)
-
-        val_loss /= len(val_dataloader)
-        val_nse /= len(val_dataloader)
-
-        # Print epoch results
-        print(f"Epoch [{epoch+1}/{num_epochs}], Train Loss: {train_loss:.4f}, Train NSE: {train_nse:.4f}, Val Loss: {val_loss:.4f}, Val NSE: {val_nse:.4f}")
-        #print(f"Train RMSE: {train_rmse:.4f}, Train MAE: {train_mae:.4f}, Train MAPE: {train_mape:.4f}, Train R^2: {train_r_squared:.4f}, Train KGE: {train_kge:.4f}, Train Pearson: {train_pearson:.4f}")
-        #print(f"Val RMSE: {val_rmse:.4f}, Val MAE: {val_mae:.4f}, Val MAPE: {val_mape:.4f}, Val R^2: {val_r_squared:.4f}, Val KGE: {val_kge:.4f}, Val Pearson: {val_pearson:.4f}")
-        # Early stopping logic
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            early_stop_counter = 0
-            # Save the best model
-            torch.save(model.state_dict(), '/Users/SverreB/Github_Repo/sverrbey_project/model/save/' + name + '_best.pth')
-        else:
-            early_stop_counter += 1
-            print(f"Early stopping counter: {early_stop_counter}/{patience}")
-
-        if early_stop_counter >= patience:
-            print("Early stopping triggered. Stopping training.")
-            break
-
-    # Save the final model
-    torch.save(model.state_dict(), '/Users/SverreB/Github_Repo/sverrbey_project/model/save/' + name + '.pth')
-    return model
-
-
-def train_model_v2(model, train_dataloader, channels, height, width, extent, val_dataloader, name, scaler_y, scaler_x, num_epochs=100, learning_rate=0.001):
-    """
-    Description:
-    """
-    # Define the loss function and optimizer
-    criterion = torch.nn.MSELoss()  # Mean Squared Error Loss
-    #optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    optimizer = torch.optim.Adam(list(model.parameters()) + list(model.hbv_model.parameters()), lr=0.001)
-   
-    # Early stopping parameters
-    patience = 10  # Number of epochs to wait for improvement
-    best_val_loss = float('inf')
-    early_stop_counter = 0
-
-    # Training loop
-    for epoch in range(num_epochs):
-        model.train()
-        train_loss  = 0.0
-        train_nse   = 0.0
-        train_rmse  = 0.0
-        train_mae   = 0.0
-        train_mape  = 0.0
-        train_kge   = 0.0
-        train_r_squared = 0.0
-        train_pearson   = 0.0
-
-        for batch_x, batch_y in train_dataloader:
-            # Forward pass
-            outputs = model(batch_x, scaler_x)
-
-            # Calculate loss
-            loss = criterion(outputs, batch_y)
-
-            # Backward pass and optimization
-            optimizer.zero_grad()
-            loss.backward(retain_graph=True)
-            optimizer.step()
-
-            train_loss += loss.item()
-
-            # Denormalize the predictions and true values
-            y_true = scaler_y.inverse_transform(batch_y.detach().cpu().numpy())
-            y_pred = scaler_y.inverse_transform(outputs.detach().cpu().numpy())
-
-            train_nse   += NSE_formula(y_true, y_pred)
-            train_rmse  += RMSE_formula(y_true, y_pred)
-            train_mae   += MAE_formula(y_true, y_pred)
-            train_mape  += MAPE_formula(y_true, y_pred)
-            train_kge   += KGE_formula(y_true, y_pred)
-            train_r_squared += R_squared_formula(y_true, y_pred)
-            train_pearson   += Pearson_formula(y_true, y_pred)
-
-        train_loss /= len(train_dataloader)
-        train_nse /= len(train_dataloader)
-
-        # Validation loop
-        model.eval()
-        val_loss = 0.0
-        val_nse  = 0.0
-        val_rmse = 0.0
-        val_mae  = 0.0
-        val_mape = 0.0
-        val_r_squared = 0.0
-        val_kge  = 0.0
-        val_pearson   = 0.0
-        with torch.no_grad():
-            for batch_x, batch_y in val_dataloader:
-                outputs = model(batch_x, scaler_x)
-                
-                loss = criterion(outputs, batch_y)
-                val_loss += loss.item()
-
-                # Denormalize the predictions and true values
-                y_true = scaler_y.inverse_transform(batch_y.detach().cpu().numpy())
-                y_pred = scaler_y.inverse_transform(outputs.detach().cpu().numpy())
-
-                val_nse   += NSE_formula(y_true, y_pred)
-                val_rmse  += RMSE_formula(y_true, y_pred)
-                val_mae   += MAE_formula(y_true, y_pred)
-                val_mape  += MAPE_formula(y_true, y_pred)
-                val_kge   += KGE_formula(y_true, y_pred)
-                val_r_squared += R_squared_formula(y_true, y_pred)
-                val_pearson   += Pearson_formula(y_true, y_pred)
-
-        val_loss /= len(val_dataloader)
-        val_nse /= len(val_dataloader)
-
-        # Print epoch results
-        print(f"Epoch [{epoch+1}/{num_epochs}], Train Loss: {train_loss:.4f}, Train NSE: {train_nse:.4f}, Val Loss: {val_loss:.4f}, Val NSE: {val_nse:.4f}")
-        #print(f"Train RMSE: {train_rmse:.4f}, Train MAE: {train_mae:.4f}, Train MAPE: {train_mape:.4f}, Train R^2: {train_r_squared:.4f}, Train KGE: {train_kge:.4f}, Train Pearson: {train_pearson:.4f}")
-        #print(f"Val RMSE: {val_rmse:.4f}, Val MAE: {val_mae:.4f}, Val MAPE: {val_mape:.4f}, Val R^2: {val_r_squared:.4f}, Val KGE: {val_kge:.4f}, Val Pearson: {val_pearson:.4f}")
-        # Early stopping logic
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            early_stop_counter = 0
-            # Save the best model
-            torch.save(model.state_dict(), '/Users/SverreB/Github_Repo/sverrbey_project/model/save/' + name + '_best.pth')
-        else:
-            early_stop_counter += 1
-            print(f"Early stopping counter: {early_stop_counter}/{patience}")
-
-        if early_stop_counter >= patience:
-            print("Early stopping triggered. Stopping training.")
-            break
-
-    # Save the final model
-    torch.save({
-        'hbv_lstm_state_dict': model.state_dict(),  # Save HBV_LSTM parameters
-        'hbv_model_state_dict': model.hbv_model.state_dict()  # Save HBV_Model_LSTM parameters
-        },'/Users/SverreB/Github_Repo/sverrbey_project/model/save/' + name + '.pth')
-    return model
-        
-
-def reformat_elevation_map(tif_path, target_shape):
-    """
-    Reformat a .tif elevation map to match the target shape.
-
-    Args:
-        tif_path (str): Path to the .tif elevation map.
-        target_shape (tuple): Desired shape (height, width) to match x_data.
-
-    Returns:
-        np.ndarray: Resampled elevation map with the target shape.
-    """
-    # Open the .tif file
-    with rasterio.open(tif_path) as src:
-        # Read the elevation data
-        elevation_data = src.read(1)  # Read the first band (assumes single-band elevation map)
-
-        # Get the original shape of the elevation map
-        original_shape = elevation_data.shape
-
-        # Calculate the resampling scale factors
-        scale_y = target_shape[0] / original_shape[0]
-        scale_x = target_shape[1] / original_shape[1]
-
-        # Resample the elevation data to the target shape
-        elevation_resampled = src.read(
-            1,
-            out_shape=(int(target_shape[0]), int(target_shape[1])),
-            resampling=Resampling.bilinear  # Use bilinear interpolation for resampling
-        )
-
-        # Ensure the output is a 2D NumPy array
-        elevation_resampled = np.array(elevation_resampled)
-
-    return elevation_resampled
-
-def filter_valid_indices(data, seq_length):
-    """
-    Filters out invalid data and creates sequences of a specified length.
-
-    Args:
-        data (list): Input data containing valid and invalid values.
-        seq_length (int): Desired sequence length.
-
-    Returns:
-        set: set of valid indices.
-    """
-    result = np.full(len(data), False, dtype=bool)
-    valid_set = set()
-    for x in range(len(data) - seq_length):
-        #Step 1: We create a sequence, and if the sequence contains -99.0 we skip it
-        possible_seq = data[x:x+seq_length]
-        if -99.0 in possible_seq:
-            continue
-        else:
-            for i in range(x, x+seq_length):
-                #Step 2: We add the valid indices to a set
-                valid_set.add(i)
-    for j in valid_set:
-        result[j] = True
-    
-
-    return result
-
-def extract_info(df, identifier):
-    catchment_info = pd.DataFrame(df[:][:9].transpose())
-    column_labels = catchment_info.iloc[0]
-    catchment_info = catchment_info.drop(index=0)
-    catchment_info.columns = column_labels
-    index_labels = catchment_info[identifier]
-    catchment_info = catchment_info.drop(columns=identifier)
-    catchment_info.index = index_labels
-    index_labels = ['Date'] + list(index_labels)
-    df = df.iloc[10:].reset_index(drop=True)
-    df.columns = index_labels
-
-    return catchment_info, df
-
-def catchment_styrn(number_days):
-    #Stryn
-    df_perc = pd.read_csv('data/Stryn/DailyPrec_Stryn.txt', header=None, encoding='latin1', delimiter='\t')
-    df_temp = pd.read_csv('data/Stryn/DailyTemp_Stryn.txt', header=None, encoding='latin1', delimiter='\t')
-    df_evap = pd.read_csv('data/Stryn/DailyEvap_Stryn.txt', header=None, encoding='latin1', delimiter='\t')
-    df_discharge = pd.read_csv('data/Stryn/DailyDisch_Stryn.txt', header=None, encoding='latin1', delimiter='\t')
-
-    perc_info, df_perc   = extract_info(df_perc, 'Point ID')
-    temp_info, df_temp   = extract_info(df_temp, 'point id')
-    evap_info, df_evap   = extract_info(df_evap, 'point id')
-    disch_info, df_discharge  = extract_info(df_discharge, 'point id')
-    
-    catchment_info = [perc_info, temp_info, evap_info, disch_info]
-    points = dict()
-    for input_value in catchment_info:
-        for pointID in input_value.index:
-            points[pointID] =  (float(input_value['Xcoord'][pointID]), float(input_value['Ycoord'][pointID]))
-
-    perc_values = dict()
-    for c in df_perc.columns[1:]:
-        perc_values[c] = df_perc[c][0:number_days].to_numpy(dtype=float).flatten()
-
-    temp_values = dict()
-    for c in df_temp.columns[1:]:
-        temp_values[c] = df_temp[c][0:number_days].to_numpy(dtype=float).flatten()
-
-    evap_values = dict()
-    for c in df_evap.columns[1:]:
-        evap_values[c] = df_evap[c][0:number_days].to_numpy(dtype=float).flatten()
-
-    disch_values = dict()
-    for c in df_discharge.columns[1:]:
-        disch_values[c] = df_discharge[c][0:number_days].to_numpy(dtype=float).flatten()
-    
-    dates = df_perc['Date'][0:number_days].to_numpy().flatten()
-    return points, perc_values, temp_values, evap_values, disch_values, dates
-
-def catchment_gaula(number_days):
-    # Gaula
-    df_perc         = pd.read_csv('data/Gaula/DailyPrecip_Gaula.txt', header=None, encoding='latin1', delimiter='\t')
-    df_temp         = pd.read_csv('data/Gaula/DailyTemp_Gaula.txt', header=None, encoding='latin1', delimiter='\t')
-    df_rad          = pd.read_csv('data/Gaula/DailyGlobRad_Gaula.txt', header=None, encoding='latin1', delimiter='\t')
-    df_hydMetOBs    = pd.read_csv('data/Gaula/DailyHydMetObs.txt', header=None, encoding='latin1', delimiter='\t')
-    df_relHum       = pd.read_csv('data/Gaula/DailyRelHum_Gaula.txt', header=None, encoding='latin1', delimiter='\t')
-    df_wind         = pd.read_csv('data/Gaula/DailyWind_Gaula.txt', header=None, encoding='latin1', delimiter='\t')
-    df_discharge    = pd.read_csv('data/Gaula/DailyDischarge_Gaula.txt', header=None, encoding='latin1', delimiter='\t')
-    
-    perc_info, df_perc   = extract_info(df_perc, 'Point ID')
-    temp_info, df_temp   = extract_info(df_temp, 'point id')
-    rad_info, df_rad     = extract_info(df_rad, 'Point ID')
-    hyd_info, df_hydMetOBs = extract_info(df_hydMetOBs, 'point id')
-    relHum_info, df_relHum = extract_info(df_relHum, 'Point ID')
-    wind_info, df_wind   = extract_info(df_wind, 'Point ID')
-    disch_info, df_discharge  = extract_info(df_discharge, 'point id')
-
-    gaula_info = [perc_info,temp_info, rad_info, hyd_info, relHum_info, wind_info, disch_info]
-    points_gaula = dict()
-    for input_value in gaula_info:
-        for pointID in input_value.index:
-            points_gaula[pointID] = (float(input_value['Xcoord'][pointID]), float(input_value['Ycoord'][pointID])) 
-
-    perc_values = dict()
-    for c in df_perc.columns[1:]:
-        perc_values[c] = df_perc[c][0:number_days].to_numpy(dtype=float).flatten()
-    
-    temp_values = dict()
-    for c in df_temp.columns[1:]:
-        temp_values[c] = df_temp[c][0:number_days].to_numpy(dtype=float).flatten()
-
-    rad_values = dict()
-    for c in df_rad.columns[1:]:
-        rad_values[c] = df_rad[c][0:number_days].to_numpy(dtype=float).flatten()
-    hyd_values = dict()
-    for c in df_hydMetOBs.columns[1:]:
-        hyd_values[c] = df_hydMetOBs[c][0:number_days].to_numpy(dtype=float).flatten()
-
-    relHum_values = dict()
-    for c in df_relHum.columns[1:]:
-        relHum_values[c] = df_relHum[c][0:number_days].to_numpy(dtype=float).flatten()
-
-    wind_values = dict()
-    for c in df_wind.columns[1:]:
-        wind_values[c] = df_wind[c][0:number_days].to_numpy(dtype=float).flatten()
-
-    disch_values = dict()
-    for c in df_discharge.columns[1:]:
-        disch_values[c] = df_discharge[c][0:number_days].to_numpy(dtype=float).flatten()
-    
-    dates = df_perc['Date'][0:number_days].to_numpy().flatten()
-
-    return points_gaula, perc_values, temp_values, rad_values, hyd_values, relHum_values, wind_values, disch_values, dates
-
-# Evaluation metrics
-def NSE_formula(y_true, y_pred):
-    # Calculate NSE in the original scale
-    numerator = np.sum((y_true - y_pred) ** 2)
-    denominator = np.sum((y_true - np.mean(y_true)) ** 2)
-    return 1 - (numerator / denominator if denominator != 0 else 0)
-
-def RMSE_formula(y_true, y_pred):
-    # Calculate RMSE in the original scale
-    mse = np.mean((y_true - y_pred) ** 2)
-    return np.sqrt(mse)
-
-def MAE_formula(y_true, y_pred):
-    # Calculate MAE in the original scale
-    mae = np.mean(np.abs(y_true - y_pred))
-    return mae
-
-def MAPE_formula(y_true, y_pred):
-    # Calculate MAPE in the original scale
-    mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
-    return mape
-
-def R_squared_formula(y_true, y_pred):
-    # Calculate R-squared in the original scale
-    ss_res = np.sum((y_true - y_pred) ** 2)
-    ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
-    return 1 - (ss_res / ss_tot if ss_tot != 0 else 0)
-
-def KGE_formula(y_true, y_pred):
-    # Calculate KGE in the original scale
-    mean_y_true = np.mean(y_true)
-    mean_y_pred = np.mean(y_pred)
-    std_y_true = np.std(y_true)
-    std_y_pred = np.std(y_pred)
-    correlation = np.corrcoef(y_true, y_pred)[0, 1]
-    
-    kge = correlation * (std_y_pred / std_y_true) * (mean_y_pred / mean_y_true)
-    return kge
-
-def Pearson_formula(y_true, y_pred):
-    # Calculate Pearson correlation coefficient
-    return np.corrcoef(y_true, y_pred)[0, 1]
-
-def read_rst_to_array_with_custom_size(rst_file_path, target_width, target_height):
-    """
-    Reads an .rst file using rasterio and resamples it to a custom width and height.
-
-    Args:
-        rst_file_path (str): Path to the .rst file.
-        target_width (int): Desired width of the output array.
-        target_height (int): Desired height of the output array.
-
-    Returns:
-        np.ndarray: A 2D numpy array with shape (target_height, target_width) containing elevation data.
-    """
-    try:
-        # Open the .rst file using rasterio
-        with rasterio.open(rst_file_path) as src:
-            # Calculate the resampling scale factors
-            scale_width = target_width / src.width
-            scale_height = target_height / src.height
-
-            # Resample the raster data to the desired dimensions
-            elevation_array = src.read(
-                1,  # Read the first band (elevation data)
-                out_shape=(target_height, target_width),
-                resampling=Resampling.bilinear  # Use bilinear resampling for smoother results
-            )
-
-        return elevation_array
-
-    except Exception as e:
-        print(f"An error occurred while reading the .rst file: {e}")
-        return None
+    #plot_predictions_vs_actuals(model_LSTM, test_dataloader, scaler_y, 'LSTM_Satellite')
     
 if __name__ == "__main__":
     main()

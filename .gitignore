@@ -1,4 +1,5 @@
 .venv/
+.conda/
 __pycache__/
 *.pyc
 *.pyo
@@ -9,5 +10,8 @@ __pycache__/
 *.ipynb_checkpoints/
 model/save/
 src/data/interpolated_spatial_data/*.json
-src/data/Stryn/*.tif
+src/data/Stryn/*.tiff
 data/graphs/
+*.tiff
+*.nat
+*.json

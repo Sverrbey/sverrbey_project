@@ -1,0 +1,45 @@
+Available parameters:
+Parameter ID: {'parameter': 0, 'parameterName': 'Nedbør', 'parameterNameEng': 'Precipitation', 'unit': 'mm'}
+Parameter ID: {'parameter': 1000, 'parameterName': 'Vannstand', 'parameterNameEng': 'Stage', 'unit': 'm'}
+Parameter ID: {'parameter': 1001, 'parameterName': 'Vannføring', 'parameterNameEng': 'Discharge', 'unit': 'm³/s'}
+Parameter ID: {'parameter': 1002, 'parameterName': 'Vannhastighet', 'parameterNameEng': 'Water speed', 'unit': 'm/s'}
+Parameter ID: {'parameter': 1003, 'parameterName': 'Vanntemperatur', 'parameterNameEng': 'Water temperature', 'unit': '°C'}
+Parameter ID: {'parameter': 1004, 'parameterName': 'Magasinvolum', 'parameterNameEng': 'Reservoir volume', 'unit': 'millioner m³'}
+Parameter ID: {'parameter': 1006, 'parameterName': 'Ledningsevne', 'parameterNameEng': 'Conductivity', 'unit': 'µS/cm'}
+Parameter ID: {'parameter': 1007, 'parameterName': 'pH', 'parameterNameEng': 'pH', 'unit': 'pH'}
+Parameter ID: {'parameter': 1012, 'parameterName': 'Overvannstand kraftverk', 'parameterNameEng': 'Head water level-hydropow.', 'unit': 'm'}
+Parameter ID: {'parameter': 1200, 'parameterName': 'Konsentrasjon suspendert min. materiale', 'parameterNameEng': 'Concentration suspended (inorg.) sedim.', 'unit': 'mg/l'}
+Parameter ID: {'parameter': 1208, 'parameterName': 'Konsentrasjon organisk materiale', 'parameterNameEng': 'Concentration of organic material', 'unit': 'mg/l'}
+Parameter ID: {'parameter': 1215, 'parameterName': 'Turbiditet (Nepheometrisk)', 'parameterNameEng': 'Turbidity (Nephelometric)', 'unit': 'NTU'}
+Parameter ID: {'parameter': 1216, 'parameterName': 'Turbiditet (Formazin)', 'parameterNameEng': 'Turbidity (Formazin)', 'unit': 'FTU'}
+Parameter ID: {'parameter': 14, 'parameterName': 'Vindretning', 'parameterNameEng': 'Wind direction', 'unit': '°'}
+Parameter ID: {'parameter': 15, 'parameterName': 'Vindhastighet', 'parameterNameEng': 'Wind speed', 'unit': 'm/s'}
+Parameter ID: {'parameter': 17, 'parameterName': 'Lufttemperatur', 'parameterNameEng': 'Air temperature', 'unit': '°C'}
+Parameter ID: {'parameter': 2, 'parameterName': 'Relativ luftfuktighet', 'parameterNameEng': 'Relative humidity', 'unit': '%'}
+Parameter ID: {'parameter': 2000, 'parameterName': 'Grunnvannsnivå - Dyp under rørtopp', 'parameterNameEng': 'Groundwater - Depth from top pipe', 'unit': 'm'}
+Parameter ID: {'parameter': 2001, 'parameterName': 'Markfuktighet', 'parameterNameEng': 'Soil water', 'unit': '%'}
+Parameter ID: {'parameter': 2002, 'parameterName': 'Snødybde', 'parameterNameEng': 'Snow depth', 'unit': 'cm'}
+Parameter ID: {'parameter': 2003, 'parameterName': 'Snøens vannekvivalent', 'parameterNameEng': 'Water equivalent of snow', 'unit': 'm'}
+Parameter ID: {'parameter': 2005, 'parameterName': 'Poretrykk', 'parameterNameEng': 'Pore pressure', 'unit': 'Pa'}
+Parameter ID: {'parameter': 2006, 'parameterName': 'Jordtemperatur', 'parameterNameEng': 'Soil temperature', 'unit': '°C'}
+Parameter ID: {'parameter': 2015, 'parameterName': 'Grunnvannstemperatur', 'parameterNameEng': 'Ground water temperature', 'unit': '°C'}
+Parameter ID: {'parameter': 2040, 'parameterName': 'Overflatetemperatur', 'parameterNameEng': 'Surface temperature', 'unit': '°C'}
+Parameter ID: {'parameter': 4, 'parameterName': 'Lufttrykk ved målestedet', 'parameterNameEng': 'Air pressure', 'unit': 'Pa'}
+Parameter ID: {'parameter': 4050, 'parameterName': 'Vekt', 'parameterNameEng': 'Weight', 'unit': 'kg'}
+Parameter ID: {'parameter': 5130, 'parameterName': 'Grunnvannsnivå - Dyp under bakken', 'parameterNameEng': 'Groundwater level', 'unit': 'm'}
+Parameter ID: {'parameter': 5131, 'parameterName': 'Grunnvannsnivå - h.o.h. (SK)', 'parameterNameEng': 'Groundwater level m.a.s.l. (SK)', 'unit': 'm'}
+Parameter ID: {'parameter': 6, 'parameterName': 'Global stråling', 'parameterNameEng': 'Global radiation', 'unit': 'W/m²'}
+Parameter ID: {'parameter': 8, 'parameterName': 'Kortbølget stråling', 'parameterNameEng': 'Short wave radiation', 'unit': 'W/m²'}
+Parameter ID: {'parameter': 8291, 'parameterName': 'Ammon Nitrogen', 'parameterNameEng': 'Ammonium Nitrogen', 'unit': 'µg/l'}
+Parameter ID: {'parameter': 8292, 'parameterName': 'Nitrat Nitrogen', 'parameterNameEng': 'Nitrate Nitrogen', 'unit': 'µg/l'}
+Parameter ID: {'parameter': 9, 'parameterName': 'Langbølget stråling', 'parameterNameEng': 'Long wave radiation', 'unit': 'W/m²'}
+Parameter ID: {'parameter': 9100, 'parameterName': 'Spenning, solstrømanlegg', 'parameterNameEng': 'Voltage, solar power battery', 'unit': 'Volt'}
+Parameter ID: {'parameter': 9103, 'parameterName': 'Spenning, batterilader på faststrøm', 'parameterNameEng': 'Voltage, Mains powered battery charger', 'unit': 'Volt'}
+Parameter ID: {'parameter': 9104, 'parameterName': 'Sekundær vannstand', 'parameterNameEng': 'Secundary waterlevel', 'unit': 'm'}
+Parameter ID: {'parameter': 9105, 'parameterName': 'Sek. grunnvannsnivå', 'parameterNameEng': 'Sec. ground water level', 'unit': 'm'}
+Parameter ID: {'parameter': 9109, 'parameterName': 'Sekundær vanntemperatur', 'parameterNameEng': 'Secondary water temperature', 'unit': '°C'}
+Parameter ID: {'parameter': 9153, 'parameterName': 'Generell parameter', 'parameterNameEng': 'Generic parameter', 'unit': '#'}
+Parameter ID: {'parameter': 9155, 'parameterName': 'Instrumenttemperatur', 'parameterNameEng': 'Instrument temperature', 'unit': '°C'}
+Parameter ID: {'parameter': 9156, 'parameterName': 'Volum', 'parameterNameEng': 'Volume', 'unit': 'liter'}
+Parameter ID: {'parameter': 9160, 'parameterName': 'Nedbør fra volum (l)', 'parameterNameEng': 'Precipitation from volume (l)', 'unit': 'mm'}
+Parameter ID: {'parameter': 9301, 'parameterName': 'Nedbør rådata', 'parameterNameEng': 'Precip rawdata', 'unit': 'mm'}
