@@ -4,10 +4,15 @@ import torch
 import seaborn as sns
 import rasterio
 from rasterio.plot import show
-import geopandas as gpd
-from shapely.geometry import Point, Polygon
-import contextily as ctx
+from rasterio.features import shapes
+from shapely.geometry import shape, Point, Polygon
 
+import geopandas as gpd
+import contextily as ctx
+import matplotlib.ticker as mticker
+from matplotlib.patches import ConnectionPatch
+
+from src.helper_functions import *
 
 def plot_sensitivity(model, dataloader, scaler_y, number):
     model.eval()
@@ -139,135 +144,191 @@ def plot_interpolation_routing(grid_list, extent, title):
 
 def EDA(EDA_prec, EDA_temp, EDA_disc):
 
-    # Display basic statistics
-    print("Combined Data Statistics:")
-    print(combined_df.describe())
-
-    print("Target Data Statistics:")
-    print(y_df.describe())
-    # Write combined_df and y_df to CSV files
-
-    combined_df.to_csv("combined_data.csv", index=False)
-    y_df.to_csv("target_data.csv", index=False)
-
-    # Plot a few time series from combined_data
-    plt.figure(figsize=(12, 6))
-    plt.plot(combined_data[:, 0], label="Precipitation")
-    plt.plot(combined_data[:, 1], label="Temperature")
-    plt.legend()
-    plt.title("Time Series of Precipitation and Temperature")
-    plt.xlabel("Time Steps")
-    plt.ylabel("Values")
-    plt.show()
-
-    # Plot target data (discharge)
-    plt.figure(figsize=(12, 6))
-    plt.plot(y_data, label="Discharge")
-    plt.legend()
-    plt.title("Time Series of Discharge")
-    plt.xlabel("Time Steps")
-    plt.ylabel("Discharge")
-    plt.show()
-
-    ## Plot histograms for combined_data
-    #combined_df.hist(bins=30, figsize=(15, 10))
-    #plt.suptitle("Histograms of Combined Data Features")
-    #plt.show()
-    #
-    ## Plot histogram for target data
-    #y_df.hist(bins=30, figsize=(6, 4))
-    #plt.suptitle("Histogram of Target Data (Discharge)")
-    #plt.show()
-    #
-    # Check for missing values
-    print("Missing values in combined_data:", np.isnan(combined_data).sum())
-    print("Missing values in y_data:", np.isnan(y_data).sum())
-
-    # Check for specific invalid values (e.g., -99)
-    print("Invalid values (-99) in combined_data:", np.sum(combined_data == -99))
-    print("Invalid values (-99) in y_data:", np.sum(y_data == -99))
-    #
-    ## Compute correlation matrix
-    #correlation_matrix = combined_df.corr()
-    #
-    ## Plot correlation heatmap
-    #plt.figure(figsize=(10, 8))
-    #sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm")
-    #plt.title("Correlation Matrix of Combined Data")
-    #plt.show()
-
-    # Scatter plot between features and target
-    for i in range(combined_data.shape[1]):
-        plt.figure(figsize=(6, 4))
-        plt.scatter(combined_data[:, i], y_data[:], alpha=0.5)
-        plt.title(f"Feature {i+1} vs Discharge")
-        plt.xlabel(f"Feature {i+1}")
-        plt.ylabel("Discharge")
-        plt.show()
-
-    # Visualize a sample sequence
-    seq_length = 7  # Example sequence length
-    sample_sequence = combined_data[:seq_length]
-
-    plt.figure(figsize=(12, 6))
-    for i in range(sample_sequence.shape[1]):
-        plt.plot(sample_sequence[:, i], label=f"Feature {i+1}")
-    plt.legend()
-    plt.title("Sample Sequence")
-    plt.xlabel("Time Steps")
-    plt.ylabel("Values")
-    plt.show()
-
-
-def plot_catchment_map(catchment_name, catchment_coords, met_stations, hydro_stations):
-    """
-    Plot catchment with meteorological and hydrological stations.
+    return
     
-    Parameters:
-        catchment_name (str): Name of the catchment
-        catchment_coords (list of tuples): Coordinates [(lon, lat), ...] forming the catchment polygon
-        met_stations (dict): {'name1': (lon, lat), 'name2': (lon, lat), ...}
-        hydro_stations (dict): {'name1': (lon, lat), 'name2': (lon, lat), ...}
+
+def deg2dms(x, pos):
+    """Convert decimal degrees to DMS string with N/S/E/W."""
+    degrees = int(abs(x))
+    minutes = int(abs(x - int(x)) * 60)
+    seconds = int((abs(x - int(x)) * 60 - minutes) * 60)
+    # Determine direction
+    if pos == 0:  # x-axis (longitude)
+        direction = 'E' if x >= 0 else 'W'
+    else:         # y-axis (latitude)
+        direction = 'N' if x >= 0 else 'S'
+    return f"{degrees}° {direction}"
+
+def deg2dms_v2(x, pos):
+    """Convert decimal degrees to DMS string with N/S/E/W."""
+    degrees = int(abs(x))
+    minutes = int(abs(x - int(x)) * 60)
+    seconds = int((abs(x - int(x)) * 60 - minutes) * 60)
+    # Determine direction
+    if pos == 0:  # x-axis (longitude)
+        direction = 'E' if x >= 0 else 'W'
+    else:         # y-axis (latitude)
+        direction = 'N' if x >= 0 else 'S'
+    return f"{degrees}°{minutes:02d}' {direction}"
+
+def create_catchment_map(catchment_name, catchment_geotiff_path, met_stations, hydro_stations, country_shapefile):
     """
+    Create GeoDataFrames for catchment area, meteorological stations, and hydrological stations
+    using a GeoTIFF raster for the catchment area.
 
-    # Create GeoDataFrame for Catchment Polygon
-    catchment_poly = Polygon(catchment_coords)
-    catchment_gdf = gpd.GeoDataFrame({'name': [catchment_name]}, geometry=[catchment_poly], crs="EPSG:4326")
+    Parameters:
+        catchment_name (str): Name of the catchment.
+        catchment_geotiff_path (str): Path to the GeoTIFF file representing the catchment mask.
+        met_stations (dict): {'name1': (lon, lat), ...}
+        hydro_stations (dict): {'name1': (lon, lat), ...}
 
-    # Create GeoDataFrame for Met Stations
-    met_gdf = gpd.GeoDataFrame({
-        'name': list(met_stations.keys()),
-        'geometry': [Point(coord) for coord in met_stations.values()]
-    }, crs="EPSG:4326")
+    Returns:
+        catchment_gdf (GeoDataFrame): Catchment area polygons.
+        met_gdf (GeoDataFrame): Meteorological stations.
+        hydro_gdf (GeoDataFrame): Hydrological stations.
+    """
+    with rasterio.open(catchment_geotiff_path) as src:
+        raster = src.read(1)
+        mask = raster != src.nodata
 
-    # Create GeoDataFrame for Hydro Stations
-    hydro_gdf = gpd.GeoDataFrame({
-        'name': list(hydro_stations.keys()),
-        'geometry': [Point(coord) for coord in hydro_stations.values()]
-    }, crs="EPSG:4326")
+        # Extract polygons from the raster mask
+        results = (
+            {'properties': {'raster_val': v}, 'geometry': s}
+            for s, v in shapes(raster, mask=mask, transform=src.transform)
+            if v != src.nodata
+        )
+        polygons = [shape(feature['geometry']) for feature in results]
+        catchment_gdf = gpd.GeoDataFrame(
+            {'name': [catchment_name] * len(polygons)},
+            geometry=polygons,
+            crs=src.crs
+        )
 
+    # Reproject to EPSG:4326 if needed
+    if catchment_gdf.crs != "EPSG:4326":
+        catchment_gdf = catchment_gdf.to_crs("EPSG:4326")
+
+    # Create GeoDataFrame for meteorological stations
+    met_gdf = gpd.GeoDataFrame(
+        {'name': list(met_stations.keys())},
+        geometry=[Point(coord) for coord in met_stations.values()],
+        crs="EPSG:4326"
+    )
+
+     # Create GeoDataFrame for meteorological stations
+    hydro_gdf = gpd.GeoDataFrame(
+        {'name': list(hydro_stations.keys())},
+        geometry=[Point(coord) for coord in hydro_stations.values()],
+        crs="EPSG:4326"
+    )
+
+    # Read continent shapefile (e.g., Europe)
+    country_gdf = gpd.read_file(country_shapefile).to_crs(epsg=4326)
+
+    return catchment_gdf, met_gdf, hydro_gdf, country_gdf
+
+def plot_catchment_map(catchment_gdf, met_gdf, hydro_gdf, catchment_name="Catchment"):
+    
     # Plotting
-    fig, ax = plt.subplots(figsize=(10, 10))
+    fig, ax = plt.subplots(figsize=(10, 6))
 
-    catchment_gdf.to_crs(epsg=3857).plot(ax=ax, color='lightblue', edgecolor='blue', alpha=0.4, label="Catchment Area")
-    met_gdf.to_crs(epsg=3857).plot(ax=ax, color='red', marker='^', markersize=100, label='Meteorological Stations')
-    hydro_gdf.to_crs(epsg=3857).plot(ax=ax, color='green', marker='o', markersize=100, label='Hydrological Stations')
+    #catchment_gdf.plot(ax=ax, color='lightblue', edgecolor='blue', alpha=0.4, label="Catchment Area")
+    catchment_gdf.to_crs(epsg=4326).plot(ax=ax, color='none', edgecolor='blue', alpha=1, label="Catchment Area")
+    #met_gdf.to_crs(epsg=4326).plot(ax=ax, color='red', marker='^', markersize=100, label='Meteorological Stations')
+    #hydro_gdf.to_crs(epsg=4326).plot(ax=ax, color='green', marker='o', markersize=100, label='Hydrological Stations')
 
-    # Annotate stations
-    for idx, row in met_gdf.iterrows():
-        ax.annotate(row['name'], xy=(row.geometry.x, row.geometry.y), xytext=(3, 3), textcoords='offset points', fontsize=9)
-
-    for idx, row in hydro_gdf.iterrows():
-        ax.annotate(row['name'], xy=(row.geometry.x, row.geometry.y), xytext=(3, -10), textcoords='offset points', fontsize=9)
-
+    
     # Add basemap
-    ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
+    #ctx.add_basemap(ax, source=ctx.providers.OpenTopoMap)
 
     # Add title and legend
     ax.set_title(f"{catchment_name} Catchment Area (Norway)", fontsize=14)
     ax.legend()
-    ax.axis('off')
+    #ax.axis('off')
 
     plt.show()
 
+def plot_country_and_catchment_zoom(country_gdf, stryn_catchment_gdf, stryn_met_gdf, stryn_hydro_gdf, gaula_gdf, gaula_met_gdf, gaula_hydro_gdf):
+    """ 
+    Plot the country with the catchment area highlighted, and a zoomed-in plot of the catchment.
+    Lines connect the catchment area on the country map to the zoomed-in plot.
+    """
+    # Ensure both are in the same CRS (EPSG:4326 for lat/lon)
+    country_gdf = country_gdf.to_crs(epsg=4326)
+    stryn_catchment_gdf = stryn_catchment_gdf.to_crs(epsg=4326)
+    gaula_gdf = gaula_gdf.to_crs(epsg=4326)
+
+
+    # Get bounds of the catchment for zoom
+    s_minx, s_miny, s_maxx, s_maxy = stryn_catchment_gdf.total_bounds
+    g_minx, g_miny, g_maxx, g_maxy = gaula_gdf.total_bounds
+
+
+    fig = plt.figure(figsize=(10, 6))
+    ax_country = fig.add_axes([0.05, 0.05, 0.4, 0.8])
+    ax_1 = fig.add_axes([0.55, 0.05, 0.4, 0.425])   # Lower zoomed-in plot
+    ax_2 = fig.add_axes([0.55, 0.55, 0.4, 0.425])   # Upper zoomed-in plot
+
+    # Main country plot
+    country_gdf.plot(ax=ax_country, color='none', edgecolor='gray')
+    stryn_catchment_gdf.plot(ax=ax_country, color='none', edgecolor='red', linewidth=2, label="Stryn")
+    gaula_gdf.plot(ax=ax_country, color='none', edgecolor='red', linewidth=2, label="Gaula")
+    ctx.add_basemap(ax_country, source=ctx.providers.OpenTopoMap, zoom=5, crs=stryn_catchment_gdf.crs)
+    #ax_country.set_title(f"{catchment_name} in Norway")
+    # Format axes as DMS
+    ax_country.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos:deg2dms(x, 0)))
+    ax_country.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos:deg2dms(x, 1)))
+    ax_country.set_ylim(54, 75)  # Adjust y-limits for better visibility
+    
+
+    # Draw lines (ConnectionPatch) from country to zoom
+    # Corners of the catchment bounding box
+    corners = [(s_minx, s_miny), (s_minx, s_maxy)] #, (maxx, miny), (maxx, maxy)
+    for (x, y) in corners:
+        con = ConnectionPatch(
+            xyA=(x, y), coordsA=ax_1.transData,
+            xyB=(x, y), coordsB=ax_country.transData,
+            color="red", linewidth=1, linestyle="--"
+        )
+        fig.add_artist(con)
+
+    stryn_catchment_gdf.plot(ax=ax_1, color='none', edgecolor='blue', alpha=0.4)
+    ctx.add_basemap(ax_1, source=ctx.providers.OpenTopoMap, crs=stryn_catchment_gdf.crs)
+    stryn_met_gdf.to_crs(epsg=4326).plot(ax=ax_1, color='red', marker='^', markersize=50)
+    stryn_hydro_gdf.to_crs(epsg=4326).plot(ax=ax_1, color='blue', marker='o', markersize=50)
+
+    corners = [(g_minx, g_miny), (g_minx, g_maxy)] #, (maxx, miny), (maxx, maxy)
+    for (x, y) in corners:
+        con = ConnectionPatch(
+            xyA=(x, y), coordsA=ax_2.transData,
+            xyB=(x, y), coordsB=ax_country.transData,
+            color="red", linewidth=1, linestyle="--"
+        )
+        fig.add_artist(con)
+
+    gaula_gdf.plot(ax=ax_2, color='none', edgecolor='blue', alpha=0.4)
+    ctx.add_basemap(ax_2, source=ctx.providers.OpenTopoMap, crs=gaula_gdf.crs)
+    gaula_met_gdf.to_crs(epsg=4326).plot(ax=ax_2, color='red', marker='^', markersize=50, label='Meteorological Stations')
+    gaula_hydro_gdf.to_crs(epsg=4326).plot(ax=ax_2, color='blue', marker='o', markersize=50, label='Hydrological Stations')
+
+    # Format axes as DMS
+    ax_1.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos:deg2dms_v2(x, 0)))
+    ax_1.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos:deg2dms_v2(x, 1)))
+    ax_1.set_xlim(s_minx, s_maxx)
+    ax_1.set_ylim(s_miny, s_maxy)
+    ax_1.set_title(f"Stryn Catchment Area")
+    
+    ax_2.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos:deg2dms_v2(x, 0)))
+    ax_2.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos:deg2dms_v2(x, 1)))
+    #ax_2.set_xlim(g_minx, g_maxx)
+    #ax_2.set_ylim(g_miny, g_maxy)
+    ax_2.set_title(f"Gaula Catchment Area")
+
+    ax_1.tick_params(axis='x')
+    ax_2.tick_params(axis='x', rotation=15)
+    
+    handles, labels = ax_2.get_legend_handles_labels()
+    fig.legend(handles, labels, bbox_to_anchor=(0.25, 0.9))
+    plt.tight_layout()
+    plt.show()
 
