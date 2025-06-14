@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
+import cv2
 import seaborn as sns
 import rasterio
 from rasterio.plot import show
@@ -43,7 +44,7 @@ def plot_sensitivity(model, dataloader, scaler_y, number):
         plt.plot(actuals[:, 1], color='red')
         plt.plot(predictions[:, 1], label=f'Predicted Data [{2**(3+number)}]', linestyle='--')
 
-def plot_predictions_vs_actuals(model, dataloader, scaler_y, scaler_x, name):
+def plot_predictions_vs_actuals(model, dataloader, scaler_y, name):
     model.eval()
     predictions = []
     actuals = []
@@ -72,7 +73,7 @@ def plot_predictions_vs_actuals(model, dataloader, scaler_y, scaler_x, name):
     plt.plot(actuals[:, 0], label='Actual Data (Feature 1)')
     plt.plot(predictions[:, 0], label='Predicted Data (Feature 1)', linestyle='--')
     if actuals.shape[1] > 1:  # If there are multiple target features
-        for i in range(min(4, actuals.shape[1])):  # Plot up to 4 features
+        for i in range(min(6, actuals.shape[1])):  # Plot up to 6 features
             plt.plot(actuals[:, i], label=f'Actual Data (Feature {i + 1})')
             plt.plot(predictions[:, i], label=f'Predicted Data (Feature {i + 1})', linestyle='--')
 
@@ -82,14 +83,14 @@ def plot_predictions_vs_actuals(model, dataloader, scaler_y, scaler_x, name):
     plt.legend()
     plt.show()
 
-def plot_predictions_vs_actuals_enhanced(model, dataloader, name):
+def plot_predictions_vs_actuals_multi(model, dataloader, scaler_y, name):
     model.eval()
     predictions = []
     actuals = []
     
     with torch.no_grad():
-        for batch_x, batch_y in dataloader:
-            outputs = model(batch_x)
+        for *batch_x, batch_y in dataloader:
+            outputs = model(*batch_x)
             predictions.append(outputs.cpu().numpy())
             actuals.append(batch_y.cpu().numpy())
     
@@ -126,9 +127,10 @@ def plot_interpolation(grid_list, day, points, path, extent, title):
     for key, (x, y) in points.items():
         plt.text(x, y, key, fontsize=12, ha='right', color='white')
     #plt.legend(loc='upper right')
-    plt.title(title + ': 2D Interpolated Data Representation using IDW : Day ' + str(day))
+    plt.title(title + ': Data Distribution : Day ' + str(day))
     plt.grid()
-    plt.savefig(path + '/' + title + '_day_' + str(day) + '.png')
+    plt.show()
+    #plt.savefig(path + '/' + title + '_day_' + str(day) + '.png')
 
 def plot_interpolation_routing(grid_list, extent, title):
     plt.rcParams["figure.figsize"] = (20, 7)
@@ -140,13 +142,7 @@ def plot_interpolation_routing(grid_list, extent, title):
     plt.grid()
     #plt.savefig(path + '/' + title + '.png')
     plt.show()
-
-
-def EDA(EDA_prec, EDA_temp, EDA_disc):
-
-    return
     
-
 def deg2dms(x, pos):
     """Convert decimal degrees to DMS string with N/S/E/W."""
     degrees = int(abs(x))
@@ -171,7 +167,7 @@ def deg2dms_v2(x, pos):
         direction = 'N' if x >= 0 else 'S'
     return f"{degrees}°{minutes:02d}' {direction}"
 
-def create_catchment_map(catchment_name, catchment_geotiff_path, met_stations, hydro_stations, country_shapefile):
+def create_catchment_map(catchment_name, catchment_geotiff_path, met_stations, hydro_stations):
     """
     Create GeoDataFrames for catchment area, meteorological stations, and hydrological stations
     using a GeoTIFF raster for the catchment area.
@@ -222,10 +218,8 @@ def create_catchment_map(catchment_name, catchment_geotiff_path, met_stations, h
         crs="EPSG:4326"
     )
 
-    # Read continent shapefile (e.g., Europe)
-    country_gdf = gpd.read_file(country_shapefile).to_crs(epsg=4326)
 
-    return catchment_gdf, met_gdf, hydro_gdf, country_gdf
+    return catchment_gdf, met_gdf, hydro_gdf
 
 def plot_catchment_map(catchment_gdf, met_gdf, hydro_gdf, catchment_name="Catchment"):
     
@@ -248,13 +242,12 @@ def plot_catchment_map(catchment_gdf, met_gdf, hydro_gdf, catchment_name="Catchm
 
     plt.show()
 
-def plot_country_and_catchment_zoom(country_gdf, stryn_catchment_gdf, stryn_met_gdf, stryn_hydro_gdf, gaula_gdf, gaula_met_gdf, gaula_hydro_gdf):
+def plot_stryn(catchment_gdf, met_gdf, hydro_gdf):
     """ 
     Plot the country with the catchment area highlighted, and a zoomed-in plot of the catchment.
     Lines connect the catchment area on the country map to the zoomed-in plot.
     """
     # Ensure both are in the same CRS (EPSG:4326 for lat/lon)
-    country_gdf = country_gdf.to_crs(epsg=4326)
     stryn_catchment_gdf = stryn_catchment_gdf.to_crs(epsg=4326)
     gaula_gdf = gaula_gdf.to_crs(epsg=4326)
 
@@ -265,49 +258,16 @@ def plot_country_and_catchment_zoom(country_gdf, stryn_catchment_gdf, stryn_met_
 
 
     fig = plt.figure(figsize=(10, 6))
-    ax_country = fig.add_axes([0.05, 0.05, 0.4, 0.8])
     ax_1 = fig.add_axes([0.55, 0.05, 0.4, 0.425])   # Lower zoomed-in plot
     ax_2 = fig.add_axes([0.55, 0.55, 0.4, 0.425])   # Upper zoomed-in plot
 
-    # Main country plot
-    country_gdf.plot(ax=ax_country, color='none', edgecolor='gray')
-    stryn_catchment_gdf.plot(ax=ax_country, color='none', edgecolor='red', linewidth=2, label="Stryn")
-    gaula_gdf.plot(ax=ax_country, color='none', edgecolor='red', linewidth=2, label="Gaula")
-    ctx.add_basemap(ax_country, source=ctx.providers.OpenTopoMap, zoom=5, crs=stryn_catchment_gdf.crs)
-    #ax_country.set_title(f"{catchment_name} in Norway")
-    # Format axes as DMS
-    ax_country.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos:deg2dms(x, 0)))
-    ax_country.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos:deg2dms(x, 1)))
-    ax_country.set_ylim(54, 75)  # Adjust y-limits for better visibility
-    
-
-    # Draw lines (ConnectionPatch) from country to zoom
-    # Corners of the catchment bounding box
-    corners = [(s_minx, s_miny), (s_minx, s_maxy)] #, (maxx, miny), (maxx, maxy)
-    for (x, y) in corners:
-        con = ConnectionPatch(
-            xyA=(x, y), coordsA=ax_1.transData,
-            xyB=(x, y), coordsB=ax_country.transData,
-            color="red", linewidth=1, linestyle="--"
-        )
-        fig.add_artist(con)
-
     stryn_catchment_gdf.plot(ax=ax_1, color='none', edgecolor='blue', alpha=0.4)
-    ctx.add_basemap(ax_1, source=ctx.providers.OpenTopoMap, crs=stryn_catchment_gdf.crs)
+    #ctx.add_basemap(ax_1, source=ctx.providers.OpenTopoMap, crs=stryn_catchment_gdf.crs)
     stryn_met_gdf.to_crs(epsg=4326).plot(ax=ax_1, color='red', marker='^', markersize=50)
     stryn_hydro_gdf.to_crs(epsg=4326).plot(ax=ax_1, color='blue', marker='o', markersize=50)
 
-    corners = [(g_minx, g_miny), (g_minx, g_maxy)] #, (maxx, miny), (maxx, maxy)
-    for (x, y) in corners:
-        con = ConnectionPatch(
-            xyA=(x, y), coordsA=ax_2.transData,
-            xyB=(x, y), coordsB=ax_country.transData,
-            color="red", linewidth=1, linestyle="--"
-        )
-        fig.add_artist(con)
-
     gaula_gdf.plot(ax=ax_2, color='none', edgecolor='blue', alpha=0.4)
-    ctx.add_basemap(ax_2, source=ctx.providers.OpenTopoMap, crs=gaula_gdf.crs)
+    #ctx.add_basemap(ax_2, source=ctx.providers.OpenTopoMap, crs=gaula_gdf.crs)
     gaula_met_gdf.to_crs(epsg=4326).plot(ax=ax_2, color='red', marker='^', markersize=50, label='Meteorological Stations')
     gaula_hydro_gdf.to_crs(epsg=4326).plot(ax=ax_2, color='blue', marker='o', markersize=50, label='Hydrological Stations')
 
@@ -332,3 +292,96 @@ def plot_country_and_catchment_zoom(country_gdf, stryn_catchment_gdf, stryn_met_
     plt.tight_layout()
     plt.show()
 
+def plot_cubic_interpolation(height=30, width=108):
+    y = np.arange(height)
+    x = np.arange(width)
+    xx, yy = np.meshgrid(x, y)
+    # Create an empty grid
+    image_test = np.zeros((height, width))
+
+    # Add random Gaussian blobs
+    num_blobs = 10
+    np.random.seed(42)  # For reproducibility
+    for _ in range(num_blobs):
+        cx = np.random.randint(0, width)
+        cy = np.random.randint(0, height)
+        sigma = np.random.uniform(2, 6)
+        amplitude = np.random.uniform(5, 15)
+        # Create a Gaussian blob
+        blob = amplitude * np.exp(-(((xx - x[cx])**2 + (yy - y[cy])**2) / (2 * sigma**2)))
+        image_test += blob
+
+    new_width, new_height = 16, 5
+    arr_resized = cv2.resize(image_test, (new_width, new_height), interpolation=cv2.INTER_CUBIC)       
+
+    # Plot the original and resized images side by side
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+    fig.suptitle('Before and After Cubic Interpolation', fontsize=16)
+    # Original image
+    im0 = axes[0].imshow(image_test, cmap='viridis', origin='lower', aspect='auto')
+    axes[0].set_title('Spatial Distribution (1km resolution)')
+    plt.colorbar(im0, ax=axes[0], label='Value')
+
+    # Resized image
+    im1 = axes[1].imshow(arr_resized, cmap='viridis', origin='lower', aspect='auto')
+    axes[1].set_title('Resized Image (7km resolution)')
+    plt.colorbar(im1, ax=axes[1], label='Value')
+
+    plt.tight_layout()
+    plt.show()
+
+def plot_flood_hydrograph():
+    test_precipitaton = np.array([[0.0, 0.0],
+                             [0.0, 0.0],
+                             [0.0, 0.0],
+                             [0.0, 0.0],
+                             [6.686111, 61.736389],
+                             [0.0, 0.0],
+                             [6.705833, 61.756944],
+                             [20.20, 61.756944],
+                             [0.0, 0.0],
+                             [0.0, 0.0],
+                             [0.0, 0.0],
+                             [0.0, 0.0],
+                             [0.0, 0.0],
+                             [0.0, 0.0],
+                             [0.0, 0.0],
+                             [0.0, 0.0],
+                             [0.0, 0.0],
+                             [0.0, 0.0],
+                             [0.0, 0.0]])
+    
+    hydrographs = np.zeros_like(test_precipitaton)
+    unit_h = np.array([0.3,0.5,0.7,1.7,1.6,1.3,1.2,1.15,1.05,0.6,0.4])  # Example unit hydrograph values
+    unit_h = unit_h / unit_h.sum()  # Ensure it sums to 1
+    window_size = len(unit_h)
+    
+    flood_indices = [4, 5, 6, 7]
+    for idx in flood_indices:
+        start = idx
+        end = min(test_precipitaton.shape[0], idx + window_size)
+        actual_window = end - start
+        for i in range(test_precipitaton.shape[1]):
+            # Adjust unit_h if at the edge
+            h = unit_h[:actual_window]
+            hydrographs[start:end, i] += test_precipitaton[idx, i] * h
+
+    adjusted_prec = test_precipitaton.copy()
+    adjusted_indices = np.where(hydrographs > 0)
+    adjusted_prec[adjusted_indices] = hydrographs[adjusted_indices]
+
+
+    plt.figure(figsize=(10, 6))
+    x = np.arange(test_precipitaton.shape[0])
+    plt.bar(x, test_precipitaton[:,0], color='blue', alpha=0.3, label='Precipitation')
+    #plt.bar(x, test_precipitaton[:,1], color='blue', alpha=1, label='Precipitation cell 2')
+    plt.bar(x, adjusted_prec[:, 0],  color='c', alpha=0.3, label='Hydrograph')
+    #plt.bar(x, adjusted_prec[:, 1],  color='purple', alpha=0.3, label='Hydrograph cell 2')
+    plt.title('Flood Hydrograph')
+    plt.xlabel('Time Step')
+    plt.ylabel('Value (mm)')
+    plt.xticks(range(len(adjusted_prec)), [f'Hour {i+1}' for i in range(len(adjusted_prec))])
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.show()

@@ -10,11 +10,11 @@ class LSTM(nn.Module):
         
         # LSTM layer
         self.lstm = nn.LSTM(
-            input_size=self.input_size,  # Flattened input size
-            hidden_size=hidden_size,     # Number of hidden units
-            num_layers=num_layers,       # Number of LSTM layers
-            batch_first=True,            # Input shape: (batch_size, seq_length, input_size)
-            dropout=dropout,             # Dropout for regularization
+            input_size  = self.input_size,  # Flattened input size
+            hidden_size = hidden_size,     # Number of hidden units
+            num_layers  = num_layers,       # Number of LSTM layers
+            batch_first = True,            # Input shape: (batch_size, seq_length, input_size)
+            dropout     = dropout,             # Dropout for regularization
             bidirectional=False          # Enable bidirectional LSTM
         )
         
@@ -26,9 +26,11 @@ class LSTM(nn.Module):
     def forward(self, x):
         # Input shape: (batch_size, seq_length, channels, height, width)
         batch_size, seq_length, channels, height, width = x.size()
-        
+
         # Flatten spatial dimensions (channels, height, width) into a single feature vector
         x = x.view(batch_size, seq_length, -1)  # Shape: (batch_size, seq_length, input_size)
+
+        batch_size, seq_length, _ = x.size()
         
         # Pass through LSTM
         lstm_out, _ = self.lstm(x)  # Output shape: (batch_size, seq_length, hidden_size)

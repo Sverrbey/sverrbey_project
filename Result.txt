@@ -1,0 +1,50 @@
+Stryn Historical
+spacing: 4000m (height: 8, width: 10)
+days = 15377
+
+seq             = 14 days
+num_layers      = 4      
+dropout         = 0.3    
+batch_size      = 2**5   
+input_channels  = 4      (precipitation, temperature, wind, evaporation)
+hidden_size     = 2**8   
+output_size     = 2      
+learning rate   = 0.003
+
+Number of NaN values in precipitation data: 325120
+Number of NaN values in temperature data: 0
+Number of NaN values in evaporation data: 95600
+
+
+Gaula Catchment:
+spacing: 8000m (height: 7, width: 14)
+days = 2191
+
+seq             = 14 days
+num_layers      = 4      
+dropout         = 0.3    
+batch_size      = 2**5   
+input_channels  = 6      (precipitation, temperature, relative humidity, wind, radiation, hydrology)
+hidden_size     = 2**8   
+output_size     = 4  
+learning rate   = 0.003
+
+
+Number of NaN values in precipitation data: 20972
+Number of NaN values in temperature data: 11956
+Number of NaN values in hydrological data: 0
+Number of NaN values in radiation data: 0
+Number of NaN values in wind data: 0
+Number of NaN values in relative humidity data: 0
+Number of NaN values in discharge data: 204
+
+Stryn Satellite: (not interesting as of now)
+seq             = 36 hours
+num_layers      = 4      
+dropout         = 0.3    
+batch_size      = 2**5   
+input_channels  = 3      
+hidden_size     = 2**7   
+output_size     = 2      
+
+

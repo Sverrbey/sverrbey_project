@@ -1,6 +1,7 @@
 import csv
 import getopt
 import json
+import os
 import sys
 import pandas as pd
 from urllib.request import Request, urlopen  # Python 3
@@ -64,6 +65,7 @@ def get_observations(argv, stnrs, filepath=None):
         df_obs['time'] = df_obs['time'].dt.strftime('%Y-%m-%d %H:%M:%S')
         df_obs = df_obs.set_index('time')[['value']]
         df_insitu[st_ids[station]] = df_obs
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
     df_insitu.to_json(filepath, orient='index')
 
 if __name__ == "__main__":

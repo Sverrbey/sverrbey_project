@@ -1,0 +1,11 @@
+Single-Run parameter values and performance measures
+Model:	Stryn
+Region:	HBV snow/Stryn
+Parameter:	TempGard	MaxIntDist	MaxIntStats	PrecGrad	TX	PcorrRain	PcorrSnow	CX	CFR	TS	MaxLWC	SnowQ_00	SnowQ_25	SnowQ_50	SnowQ_75	SnowQ_100	FieldCap	LP	BETA	k2	k1	k0	perc	Rtreshold	lakep	PerfMeasure:	Temporal R2	Temporal R2
+Routine:	IDWtemp	IDWtemp;IDWPrec;IDWEvap	IDWtemp;IDWPrec;IDWEvap	IDWPrec	PcorrMap2;HBVsnow	PcorrMap2	PcorrMap2	HBVsnow	HBVsnow	HBVsnow	HBVsnow	HBVsnow	HBVsnow	HBVsnow	HBVsnow	HBVsnow	HBVSoil	HBVSoil	HBVSoil	HBVResponse	HBVResponse	HBVResponse	HBVResponse	HBVResponse	HBVResponse	Test Data:	SimDischarge	SimDischarge
+Distr:	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Constant	Reference:	Qstats	Qstats
+Par 1:	-99	-99	-99	-99	-99	-99	-99	-99	-99	-99	-99	-99	-99	-99	-99	-99	-99	-99	-99	-99	-99	-99	-99	-99	-99	Start:	01.01.1980 00:00	01.01.1980 00:00
+Par 2:	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	End:	06.03.2022 00:00	06.03.2022 00:00
+Par 3:	-3.40282e+038	0	0	-3.40282e+038	-3.40282e+038	0	0	0	0	-3.40282e+038	0	0	0	0	0	0	0	0	0	-3.40282e+038	-3.40282e+038	-3.40282e+038	-3.40282e+038	-3.40282e+038	-3.40282e+038	Num Obs:	11361	13025
+Par 4:	3.40282e+038	3.40282e+038	3.40282e+038	3.40282e+038	3.40282e+038	3.40282e+038	3.40282e+038	3.40282e+038	1	3.40282e+038	3.40282e+038	3.40282e+038	3.40282e+038	3.40282e+038	3.40282e+038	3.40282e+038	3.40282e+038	1	3.40282e+038	3.40282e+038	3.40282e+038	3.40282e+038	3.40282e+038	3.40282e+038	3.40282e+038	time/loc:	Grasdøla	Strynsvatn
+0	-0.5	500000	25	5	1.5	1.4	1.06	2.2	0.01	-1.5	0.1	0.35	0.25	0.2	0.15	0.05	80	0.8	0.133	0.475	0.2	0.025	2	35	0.062		0.771476	0.74036
