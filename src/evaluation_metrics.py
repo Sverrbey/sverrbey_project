@@ -49,9 +49,11 @@ def KGE_formula(y_true, y_pred):
     std_y_pred = np.std(y_pred)
     if std_y_true == 0 or mean_y_true == 0:
         return np.nan
-    correlation = np.corrcoef(y_true, y_pred)[0, 1]
-    kge = correlation * (std_y_pred / std_y_true) * (mean_y_pred / mean_y_true)
-    return kge
+    a = std_y_pred / std_y_true
+    b = mean_y_pred / mean_y_true
+    r = np.corrcoef(y_true, y_pred)[0, 1]
+    kge = (r-1)**2 + (a-1)**2 + (b-1)**2
+    return 1 - np.sqrt(kge)
 
 def Pearson_formula(y_true, y_pred):
     y_true, y_pred = nan_filter(y_true, y_pred)

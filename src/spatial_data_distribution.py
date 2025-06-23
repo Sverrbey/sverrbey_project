@@ -5,7 +5,7 @@ import os
 import rasterio
 from rasterio.crs import CRS
 from src.SAT_download import *
-def reformat_data(points, prec_values, temp_values, disch_values, number_days, file_paths, evap_values=None, rad_values=None, hyd_values=None, relHum_values=None, wind_values=None, extent=(1, 1, 1, 1), spacing=7000):
+def reformat_data(points, prec_values, temp_values, disch_values, number_days, file_paths, evap_values=None, rad_values=None, relHum_values=None, wind_values=None, extent=(1, 1, 1, 1), spacing=7000):
     
     # Calculate the number of grid points based on the spacing
     width = int((extent[1] - extent[0]) / spacing) + 1
@@ -21,7 +21,6 @@ def reformat_data(points, prec_values, temp_values, disch_values, number_days, f
     interp_temp = []
     interp_evap = []
     interp_rad = []
-    interp_hyd = []
     interp_relHum = []
     interp_wind = []
     
@@ -32,8 +31,6 @@ def reformat_data(points, prec_values, temp_values, disch_values, number_days, f
             evap = np.array(list(evap_values.values())).T[n]
         if rad_values is not None:
             rad = np.array(list(rad_values.values())).T[n]
-        if hyd_values is not None:
-            hyd = np.array(list(hyd_values.values())).T[n]
         if relHum_values is not None:
             relHum = np.array(list(relHum_values.values())).T[n]
         if wind_values is not None:
@@ -46,8 +43,6 @@ def reformat_data(points, prec_values, temp_values, disch_values, number_days, f
             evap_points = np.array([points[key] for key in evap_values.keys()])
         if rad_values is not None:
             rad_points = np.array([points[key] for key in rad_values.keys()])
-        if hyd_values is not None:
-            hyd_points = np.array([points[key] for key in hyd_values.keys()])
         if relHum_values is not None:
             relHum_points = np.array([points[key] for key in relHum_values.keys()])
         if wind_values is not None:
@@ -60,8 +55,6 @@ def reformat_data(points, prec_values, temp_values, disch_values, number_days, f
             evap_points = evap_points[~np.isnan(evap) & (evap != 0)]
         if rad_values is not None:
             rad_points = rad_points[~np.isnan(rad) & (rad != 0)]
-        if hyd_values is not None:
-            hyd_points = hyd_points[~np.isnan(hyd) & (hyd != 0)]
         if relHum_values is not None:
             relHum_points = relHum_points[~np.isnan(relHum) & (relHum != 0)]
         if wind_values is not None:
@@ -74,13 +67,11 @@ def reformat_data(points, prec_values, temp_values, disch_values, number_days, f
             evap = evap[~np.isnan(evap) & (evap != 0)]
         if rad_values is not None:
             rad = rad[~np.isnan(rad) & (rad != 0)]
-        if hyd_values is not None:
-            hyd = hyd[~np.isnan(hyd) & (hyd != 0)]
         if relHum_values is not None:
             relHum = relHum[~np.isnan(relHum) & (relHum != 0)]
         if wind_values is not None:
             wind = wind[~np.isnan(wind) & (wind != 0)]
-            
+
         # Interpolate the precipitation values using IDW
         if prec_points.size != 0:
             interp_prec.append(inverse_distance_weighting(prec_points, prec, x_grid=grid_x[0], y_grid=grid_y.T[0], power=2))
@@ -104,11 +95,7 @@ def reformat_data(points, prec_values, temp_values, disch_values, number_days, f
             interp_rad.append(inverse_distance_weighting(rad_points, rad, x_grid=grid_x[0], y_grid=grid_y.T[0], power=1))
         else:
             interp_rad.append(np.full((height, width), np.nan))
-        # Interpolate the hydrology values using IDW
-        if hyd_values is not None and hyd_points.size != 0:
-            interp_hyd.append(inverse_distance_weighting(hyd_points, hyd, x_grid=grid_x[0], y_grid=grid_y.T[0], power=1))
-        else:
-            interp_hyd.append(np.full((height, width), np.nan))
+       
         # Interpolate the relative humidity values using IDW
         if relHum_values is not None and relHum_points.size != 0:
             interp_relHum.append(inverse_distance_weighting(relHum_points, relHum, x_grid=grid_x[0], y_grid=grid_y.T[0], power=1))
@@ -152,67 +139,10 @@ def reformat_data(points, prec_values, temp_values, disch_values, number_days, f
         })
         df_wind.to_json(file_paths[5], orient='index')
     
-    if hyd_values is not None:
-        df_hyd = pd.DataFrame({
-            "interpolated_hyd": interp_hyd
-        })
-        df_hyd.to_json(file_paths[6], orient='index')
 
     if evap_values is not None:
         df_evap = pd.DataFrame({
             "interpolated_evap": interp_evap
-        })
-        df_evap.to_json(file_paths[6], orient='index')
-
-    return
-
-def reformat_flat_data(points, prec_values, temp_values, disch_values, number_days, file_paths, evap_values=None, rad_values=None, hyd_values=None, relHum_values=None, wind_values=None):
-    
-    # For each row of input data, create a grid of interpolated values
-
-    
-
-    df_prec = pd.DataFrame({
-        "flat_prec": list(np.array(list(prec_values.values())).T)
-    })
-
-    df_temp = pd.DataFrame({
-        "flat_temp": list(np.array(list(temp_values.values())).T)
-    })
-
-    df_discharge = pd.DataFrame({
-        "discharge": list(np.array(list(disch_values.values())).T)
-    })
-    # save the dataframe as a csv file 
-    df_prec.to_json(file_paths[0], orient='index')
-    df_temp.to_json(file_paths[1], orient='index')
-    df_discharge.to_json(file_paths[2], orient='index')
-    if rad_values is not None:
-        df_rad = pd.DataFrame({
-            "flat_rad": list(np.array(list(rad_values.values())).T)
-        })
-        df_rad.to_json(file_paths[3], orient='index')
-
-    if relHum_values is not None:
-        df_relHum = pd.DataFrame({
-            "flat_relHum": list(np.array(list(relHum_values.values())).T)
-        })
-        df_relHum.to_json(file_paths[4], orient='index')
-    if wind_values is not None:
-        df_wind = pd.DataFrame({
-            "flat_wind": list(np.array(list(wind_values.values())).T)
-        })
-        df_wind.to_json(file_paths[5], orient='index')
-    
-    if hyd_values is not None:
-        df_hyd = pd.DataFrame({
-            "flat_hyd": list(np.array(list(hyd_values.values())).T)
-        })
-        df_hyd.to_json(file_paths[6], orient='index')
-
-    if evap_values is not None:
-        df_evap = pd.DataFrame({
-            "flat_evap": list(np.array(list(evap_values.values())).T)
         })
         df_evap.to_json(file_paths[6], orient='index')
 

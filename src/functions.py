@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pyproj
 import geopandas as gpd
-from hmmlearn.hmm   import GaussianHMM
+
+from hmmlearn.hmm           import GaussianHMM
 from sklearn.preprocessing  import MinMaxScaler
 from torch.utils.data       import DataLoader, TensorDataset
 from rasterio.enums         import Resampling
@@ -18,41 +19,6 @@ from src.topology           import *
 from src.spatial_data_distribution import *
 
 def plot_study_area():
-    
-    number_days = 42*365 #  max 42 years (80-22)
-    # Timeseries
-    points, _, _, _, _,  _ = catchment_styrn(number_days)
-
-    met_stations = {}
-    hydro_stations = {}
-    for key, value in points.items():
-        if key == "5" or key == "6": # Hydro stations
-            hydro_stations[key] = (utm_to_latlon(value[0], value[1], 33, northern_hemisphere=True))
-        met_stations[key] = (utm_to_latlon(value[0], value[1], 33, northern_hemisphere=True)) # Convert UTM to lat/lon
-    
-    stryn_catchment_file = "data\Stryn\Wtshed.tif"
-
-    stryn_catchment_gdf, stryn_met_gdf, stryn_hydro_gdf = create_catchment_map("Stryn",stryn_catchment_file, met_stations, hydro_stations)
-    
-   # Gaula
-    number_days = 6*365 # max 6 years (99-05)
-    # Timeseries
-    points_gaula,  _, _, _, _, _, _, _, _ = catchment_gaula(number_days)
-
-    met_stations = {}
-    hydro_stations = {}
-    for key, value in points_gaula.items():
-        if key in ["4", "1", "2", "3", "10"]: # Hydro stations
-            hydro_stations[key] = (utm_to_latlon(value[0], value[1], 32, northern_hemisphere=True))
-        met_stations[key] = (utm_to_latlon(value[0], value[1], 32, northern_hemisphere=True)) # Convert UTM to lat/lon
-    
-    gaula_catchment_file = "data\Gaula\catchments.tiff"
-
-    gaula_gdf, gaula_met_gdf, gaula_hydro_gdf = create_catchment_map("Gaula", gaula_catchment_file, met_stations, hydro_stations)
-    
-    plt_catchment(stryn_catchment_gdf, stryn_met_gdf, stryn_hydro_gdf)
-
-def plot_study_area_v2():
     geo_jsons = [
         'https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_NOR_0.json'
     ]
@@ -73,6 +39,7 @@ def plot_study_area_v2():
     plt.gcf().axes[0].axis('off')
     plt.legend(loc='upper left', fontsize=12, markerscale=1.5)
     plt.savefig('catchment_locations.jpg')
+
 
 def preprocess_data(combined_data, y_data, input_size, seq_length, batch_size, num_samples, channels=3, train_split=0.7, validation_split=0.15, test_split=0.15):
     """
@@ -517,7 +484,6 @@ def catchment_gaula(number_days):
     df_prec         = pd.read_csv('data/Gaula/DailyPrecip_Gaula.txt', header=None, encoding='latin1', delimiter='\t', na_values=[-99.0, -99], skip_blank_lines=True)
     df_temp         = pd.read_csv('data/Gaula/DailyTemp_Gaula.txt', header=None, encoding='latin1', delimiter='\t', na_values=[-99.0, -99], skip_blank_lines=True)
     df_rad          = pd.read_csv('data/Gaula/DailyGlobRad_Gaula.txt', header=None, encoding='latin1', delimiter='\t', na_values=[-99.0, -99], skip_blank_lines=True)
-    df_hydMetOBs    = pd.read_csv('data/Gaula/DailyHydMetObs.txt', header=None, encoding='latin1', delimiter='\t', na_values=[-99.0, -99], skip_blank_lines=True)
     df_relHum       = pd.read_csv('data/Gaula/DailyRelHum_Gaula.txt', header=None, encoding='latin1', delimiter='\t', na_values=[-99.0, -99], skip_blank_lines=True)
     df_wind         = pd.read_csv('data/Gaula/DailyWind_Gaula.txt', header=None, encoding='latin1', delimiter='\t', na_values=[-99.0, -99], skip_blank_lines=True)
     df_discharge    = pd.read_csv('data/Gaula/DailyDischarge_Gaula.txt', header=None, encoding='latin1', delimiter='\t', na_values=[-99.0, -99], skip_blank_lines=True)
@@ -526,7 +492,6 @@ def catchment_gaula(number_days):
     df_prec         = df_prec.dropna(how='all')
     df_temp         = df_temp.dropna(how='all')
     df_rad          = df_rad.dropna(how='all')
-    df_hydMetOBs    = df_hydMetOBs.dropna(how='all')
     df_relHum       = df_relHum.dropna(how='all')
     df_wind         = df_wind.dropna(how='all')
 
@@ -536,7 +501,6 @@ def catchment_gaula(number_days):
     df_temp      = df_temp[~(df_temp.apply(lambda row: row.map(lambda x: str(x).strip() == '').all(), axis=1))]
     df_rad       = df_rad[~(df_rad.apply(lambda row: row.map(lambda x: str(x).strip() == '').all(), axis=1))]
     df_relHum    = df_relHum[~(df_relHum.apply(lambda row: row.map(lambda x: str(x).strip() == '').all(), axis=1))]
-    df_hydMetOBs = df_hydMetOBs[~(df_hydMetOBs.apply(lambda row: row.map(lambda x: str(x).strip() == '').all(), axis=1))]
     df_wind      = df_wind[~(df_wind.apply(lambda row: row.map(lambda x: str(x).strip() == '').all(), axis=1))]
 
     df_discharge.drop(columns=[3,5], inplace=True)
@@ -545,11 +509,10 @@ def catchment_gaula(number_days):
     temp_info, df_temp   = extract_info(df_temp, 'point id')
     rad_info, df_rad     = extract_info(df_rad, 'Point ID')
     wind_info, df_wind   = extract_info(df_wind, 'Point ID')
-    hyd_info, df_hydMetOBs = extract_info(df_hydMetOBs, 'point id')
     relHum_info, df_relHum = extract_info(df_relHum, 'Point ID')
     disch_info, df_discharge  = extract_info(df_discharge, 'point id')
 
-    gaula_info = [prec_info,temp_info, rad_info, hyd_info, relHum_info, wind_info, disch_info]
+    gaula_info = [prec_info,temp_info, rad_info, relHum_info, wind_info, disch_info]
     points = dict()
     for input_value in gaula_info:
         for pointID in input_value.index:
@@ -566,9 +529,6 @@ def catchment_gaula(number_days):
     rad_values = dict()
     for c in df_rad.columns:
         rad_values[c] = df_rad[c][0:number_days].to_numpy(dtype=float).flatten()
-    hyd_values = dict()
-    for c in df_hydMetOBs.columns:
-        hyd_values[c] = df_hydMetOBs[c][0:number_days].to_numpy(dtype=float).flatten()
 
     relHum_values = dict()
     for c in df_relHum.columns:
@@ -582,7 +542,7 @@ def catchment_gaula(number_days):
     for c in df_discharge.columns:
         disch_values[c] = df_discharge[c][0:number_days].to_numpy(dtype=float).flatten()
 
-    return points, prec_values, temp_values, disch_values, rad_values, hyd_values, relHum_values, wind_values
+    return points, prec_values, temp_values, disch_values, rad_values, relHum_values, wind_values
 
 def utm_to_latlon(easting, northing, zone_number=33, northern_hemisphere=True):
     """
@@ -752,9 +712,9 @@ def HMMR_2(observation, forecast, n_states=2):
 
         return std_deviation, h1, h2#, h3, h4 # Shape: (batch_size, output_size)
 
-
 def integrated_gradients(model, 
-                         input_tensor, 
+                         input_tensor,
+                         channels=1, 
                          baseline=None, 
                          target_index=None, 
                          steps=50):
@@ -771,37 +731,33 @@ def integrated_gradients(model,
     Returns:
         attributions: Integrated gradients attributions (same shape as input_tensor).
     """
-    # Ensure input_tensor requires grad
-    input_tensor = input_tensor.clone().detach().requires_grad_(True)
+    
+    batch_size, seq_length, channels, height, width = input_tensor.size()
     if baseline is None:
         baseline = torch.zeros_like(input_tensor)
     else:
         baseline = baseline.clone().detach()
 
-    # Generate scaled inputs
-    scaled_inputs = [baseline + (float(i) / steps) * (input_tensor - baseline) for i in range(steps + 1)]
-    scaled_inputs = torch.stack(scaled_inputs, dim=0)  # Shape: (steps+1, ...)
-
-    # Compute gradients
-    grads = []
-    for scaled_input in scaled_inputs:
-        scaled_input = scaled_input.requires_grad_(True)
-        output = model(scaled_input)
-        if target_index is not None:
-            output = output[..., target_index]
-        output = output.sum()
-        grad = torch.autograd.grad(outputs=output, inputs=scaled_input, retain_graph=False)[0]
-        grads.append(grad)
-    grads = torch.stack(grads, dim=0)  # Shape: (steps+1, ...)
-
-    # Approximate the integral using the trapezoidal rule
-    avg_grads = (grads[:-1] + grads[1:]) / 2.0
-    avg_grads = avg_grads.mean(dim=0)  # Average over steps
-
-    # Integrated gradients
-    integrated_grads = (input_tensor - baseline) * avg_grads
-
-    return integrated_grads
+    attributions = torch.zeros_like(input_tensor)
+    for channel in range(channels):
+        # Only interpolate the current channel, keep others at baseline
+        channel_attr = torch.zeros_like(input_tensor)
+        for alpha in torch.linspace(0, 1, steps+1):
+            # Interpolate only the current channel
+            interp = baseline.clone()
+            interp[..., channel,...] = baseline[..., channel,...] + alpha * (input_tensor[..., channel,...] - baseline[..., channel,...])
+            interp.requires_grad_(True)
+            output = model(interp)
+            if target_index is not None:
+                output = output[..., target_index]
+            output = output.sum()
+            grad = torch.autograd.grad(output, interp, retain_graph=True)[0]
+            channel_attr += grad
+        # Average gradients and scale by input difference
+        avg_grad = channel_attr / (steps + 1)
+        attributions[..., channel,...] = (input_tensor[..., channel,...] - baseline[..., channel,...]) * avg_grad[..., channel,...]
+    
+    return attributions
     
 def pair_wise_integrated_gradient(model, input_tensor, target_class, baseline_tensor, steps=50):
     """
@@ -829,3 +785,6 @@ def pair_wise_integrated_gradient(model, input_tensor, target_class, baseline_te
         integrated_grads[i] = integrated_gradient(model, input_tensor[i].unsqueeze(0), target_class, baseline_tensor[i].unsqueeze(0), steps)
 
     return integrated_grads
+
+
+

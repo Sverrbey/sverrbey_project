@@ -86,19 +86,7 @@ def main ():
         'data/flat_timeseries/stryn_wind.json',
         'data/flat_timeseries/stryn_evap.json'
     ]
-    
-    gaula_file_paths = [
-        'data/interpolated_spatial_data/gaula_prec.json',
-        'data/interpolated_spatial_data/gaula_temp.json',
-        'data/interpolated_spatial_data/gaula_disch.json',
-        'data/interpolated_spatial_data/gaula_rad.json',
-        'data/interpolated_spatial_data/gaula_relHum.json',
-        'data/interpolated_spatial_data/gaula_wind.json',
-        'data/interpolated_spatial_data/gaula_hyd.json',
-    ]
-
  
-
     Stryn_HBV_result_1 = pd.read_csv("data/SimulatedDischarge_Grasdøla.txt", sep="\t", skiprows=12, names=["Datetime", "Q","Qsim"], na_values=[-99.0, -99, "#VALUE!"])
     Stryn_HBV_result_2 = pd.read_csv("data/SimulatedDischarge_Strynsvatn.txt", sep="\t", skiprows=12, names=["Datetime", "Q","Qsim"], na_values=[-99.0, -99, "#VALUE!"])
     Stryn_dates        = pd.to_datetime(Stryn_HBV_result_1["Datetime"], format="%d.%m.%Y %H:%M")
@@ -107,36 +95,8 @@ def main ():
     Stryn_HBV = pd.concat([Stryn_HBV_result_1["Qsim"], Stryn_HBV_result_2["Qsim"]], axis=1)
     Stryn_HBV.columns = ["Station_1", "Station_2"]
 
-    Gaula_RAVEN_result_1 = pd.read_csv("data\GaulaResult_Gaulfoss local.txt", sep="\t", skiprows=12, names=["Datetime", "Q","Qsim"], na_values=[-99.0, -99, "#VALUE!"])
-    Gaula_RAVEN_result_2 = pd.read_csv("data\GaulaResult_Lillebudal Bru  .txt", sep="\t", skiprows=12, names=["Datetime", "Q","Qsim"], na_values=[-99.0, -99, "#VALUE!"])
-    Gaula_RAVEN_result_3 = pd.read_csv("data/GaulaResult_Hugdal Bru  .txt", sep="\t", skiprows=12, names=["Datetime", "Q","Qsim"], na_values=[-99.0, -99, "#VALUE!"])
-    Gaula_RAVEN_result_4 =  pd.read_csv("data/GaulaResult_Eggafoss.txt", sep="\t", skiprows=12, names=["Datetime", "Q","Qsim"], na_values=[-99.0, -99, "#VALUE!"])
-    Gaula_dates = pd.to_datetime(Gaula_RAVEN_result_1["Datetime"], format="%d.%m.%Y %H:%M")
-    Gaula_actuals = pd.concat([Gaula_RAVEN_result_1["Q"], Gaula_RAVEN_result_2["Q"], Gaula_RAVEN_result_4["Q"]], axis=1)
-    Gaula_actuals.columns = ["Station_1", "Station_2", "Station_3"]
-   
 
-    Gaula_RAVEN = pd.concat([Gaula_RAVEN_result_1["Qsim"], Gaula_RAVEN_result_2["Qsim"], Gaula_RAVEN_result_4["Qsim"]], axis=1)
-    Gaula_RAVEN.columns = ["Station_1", "Station_2", "Station_4"]
-
-    #Gaula catchment
-    #spacing     = 8000  # Spacing between grid points 
-    #number_days = 2191 # max 6 years (99-05)
-    #Gaula_RAVEN = Gaula_RAVEN[:number_days]  # Limit to 6 years of data
-    #Gaula_RAVEN = Gaula_RAVEN.to_numpy()  # Convert to numpy array for further processing
-    #Gaula_actuals = Gaula_actuals[:number_days]  # Limit to 6 years of data
-    #Gaula_actuals = Gaula_actuals.to_numpy()  # Convert to numpy array for further processing
-    #Gaula_dates = Gaula_dates[:number_days]  # Limit to 6 years of data
-    #x_limit = (540000, 645000)
-    #y_limit = (6945000,7000000)
-    #x_degrees   = ( 9.779947,  11.873204) 
-    #y_degrees   = (62.633520, 63.100231) 
-    #extent      = (x_limit[0], x_limit[1], y_limit[0], y_limit[1])  
-    #
-    ## Timeseries
-    #points, prec_values, temp_values, disch_values, rad_values, hyd_values, relHum_values, wind_values = catchment_gaula(number_days)    
     
-
     # Stryn catchment
     spacing  = 4000         # Spacing between grid points 
     number_days = 15377     #  (01-01-1980 - 06-02-2022)
@@ -176,40 +136,6 @@ def main ():
     df_evap    = pd.read_json(stryn_file_paths[6], orient='index')
 
    
-
-    #gaula_has_interpolated_data = any(
-    #    file.startswith("gaula_") and file.endswith(".json")
-    #    for file in os.listdir(interpolated_data_folder)
-    #)
-    #if not gaula_has_interpolated_data:
-    #    # Generate the grid using IDW for Gaula catchment
-    #    reformat_data(points, prec_values, temp_values, disch_values, number_days=number_days, file_paths=gaula_file_paths,evap_values=None, rad_values=rad_values, hyd_values=hyd_values, relHum_values=relHum_values, wind_values=wind_values, extent=extent, spacing=spacing)
-##
-    #df_prec     = pd.read_json(gaula_file_paths[0], orient='index')
-    #df_temp     = pd.read_json(gaula_file_paths[1], orient='index')
-    #df_disch    = pd.read_json(gaula_file_paths[2], orient='index')
-    #df_rad     = pd.read_json(gaula_file_paths[3], orient='index')
-    #df_relHum  = pd.read_json(gaula_file_paths[4], orient='index')
-    #df_wind    = pd.read_json(gaula_file_paths[5], orient='index')
-    #df_hyd     = pd.read_json(gaula_file_paths[6], orient='index')
-
-    
-    ################################## CASE 2 ########################################
-
-    # Reading the insitu data
-    #df_disch_insitu = pd.read_json(hyd_station["filepath"], orient='index')
-    #df_disch_insitu.columns = ["discharge1", "discharge2"]
-#
-    ###Satellite data
-    #df_sat_prec     = pd.read_json(resized_file_paths[0], orient='index')
-    #df_sat_temp     = pd.read_json(resized_file_paths[1], orient='index')
-    #df_sat_snow     = pd.read_json(sat_file_paths[2], orient='index')
-
-
-    # Defining the model parameters and valid data
-    
-    ################################## CASE 1 ########################################
-
     #Flat data
 
     #prec_data   = np.array(df_prec['flat_prec'].tolist())
@@ -234,26 +160,10 @@ def main ():
 
     # Switching
     evap_data   = np.array(df_evap['interpolated_evap'].tolist(), dtype=float)    
-    #hyd_data   = np.array(df_hyd['interpolated_hyd'].tolist(), dtype=float)
-    #rad_data    = np.array(df_rad['interpolated_rad'].tolist(), dtype=float)
-    #relHum_data = np.array(df_relHum['interpolated_relHum'].tolist(), dtype=float)
-    #wind_data   = np.array(df_wind['interpolated_wind'].tolist(), dtype=float)
     
-    # How many nan values are in the data?
-    #print(f"Number of NaN values in precipitation data: {np.isnan(prec_data).sum()}")
-    #print(f"Number of NaN values in temperature data: {np.isnan(temp_data).sum()}")
-    #print(f"Number of NaN values in evaporation data: {np.isnan(evap_data).sum()}")
-    #print(f"Number of NaN values in hydrological data: {np.isnan(hyd_data).sum()}")
-    #print(f"Number of NaN values in radiation data: {np.isnan(rad_data).sum()}")
-    #print(f"Number of NaN values in wind data: {np.isnan(wind_data).sum()}")
-    #print(f"Number of NaN values in relative humidity data: {np.isnan(relHum_data).sum()}")
-    #print(f"Number of NaN values in discharge data: {np.isnan(y_data).sum()}")
 
     #plot_time_series(prec_data, temp_data, evap_data, df_disch, Stryn_dates)
-    #plot_time_series_gaula(prec_data, temp_data, rad_data, relHum_data, wind_data, df_disch, Gaula_dates)
-    ## Mask rows where any feature in y_data is equal to -99.0 and the sequence length isn't possible
-    # In-situ data
-
+    
     seq_length = 14
     valid_indices = filter_valid_indices(y_data, seq_length) 
     prec_data = prec_data[valid_indices]
@@ -267,15 +177,7 @@ def main ():
     Stryn_HBV_actuals = Stryn_HBV_actuals[valid_indices]
     Stryn_dates = Stryn_dates[valid_indices]
     
-    #rad_data        = rad_data[valid_indices]
-    #wind_data       = wind_data[valid_indices]
-    #relHum_data     = relHum_data[valid_indices]
-    #Gaula_RAVEN     = Gaula_RAVEN[valid_indices]
-    #Gaula_actuals   = Gaula_actuals[valid_indices]
-    #Gaula_dates     = Gaula_dates[valid_indices]
-
-
-
+    
     # Combining the data for training
     num_samples, height, width = prec_data.shape
     prec_data_reshaped = prec_data.reshape(num_samples, -1)  # Shape: (num_samples, height * width)
@@ -284,10 +186,6 @@ def main ():
     #Switching
     evap_data_reshaped = evap_data.reshape(num_samples, -1)
     
-    #rad_data_reshaped = rad_data.reshape(num_samples, -1)
-    #wind_data_reshaped = wind_data.reshape(num_samples, -1)
-    #relHum_data_reshaped = relHum_data.reshape(num_samples, -1)
-
     # Remove rows with NaN values in the reshaped data
     prec_data_reshaped = np.nan_to_num(prec_data_reshaped, nan=0.0)  # Replace NaN values with 0
     temp_data_reshaped = np.nan_to_num(temp_data_reshaped, nan=0.0)
@@ -295,71 +193,11 @@ def main ():
     # Swtching
     evap_data_reshaped = np.nan_to_num(evap_data_reshaped, nan=0.0)
 
-    #rad_data_reshaped = np.nan_to_num(rad_data_reshaped, nan=0.0)
-    #wind_data_reshaped = np.nan_to_num(wind_data_reshaped, nan=0.0)
-    #relHum_data_reshaped = np.nan_to_num(relHum_data_reshaped, nan=0.0)
-    
-    # Print how many rows are zero in each of the reshaped data)
-
     # Stack the features along the last axis
     combined_data = np.stack([prec_data_reshaped, temp_data_reshaped, evap_data_reshaped], axis=-1)  
     combined_data = combined_data.reshape(num_samples, -1)  # Flatten spatial dimensions for normalization
 
-    ################################## CASE 2 ########################################
-    # Satellite data
-    #sat_prec_data   = np.array(df_sat_prec.values, dtype=float).reshape(-1, 5, 16)  # Reshape to (num_samples, height, width)
-    #sat_temp_data   = np.array(df_sat_temp.values, dtype=float).reshape(-1, 5, 16)  # Reshape to (num_samples, height, width)
-    #sat_snow_data   = np.array(df_sat_snow.values, dtype=float).reshape(-1, 5, 16)  # Reshape to (num_samples, height, width)
-#
-    #resized_prec = []
-    #resized_temp = []
-    #resized_snow = []
-    #
-    #for i in range(len(sat_prec_data)):
-    #    # Reshape the values in the row into the image
-    #    sat_image_prec = sat_prec_data[i]
-    #    sat_image_temp = sat_temp_data[i]
-    #    sat_image_snow = sat_snow_data[i]
-    #    # Resize the image to the desired size
-    #    new_width, new_height = 5, 5
-    #    arr_prec = cv2.resize(sat_image_prec, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
-    #    arr_temp = cv2.resize(sat_image_temp, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
-    #    arr_snow = cv2.resize(sat_image_snow, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
-    #    resized_prec.append(arr_prec.flatten())
-    #    resized_temp.append(arr_temp.flatten())
-    #    resized_snow.append(arr_snow.flatten())
-    #
-    #sat_prec_data = np.array(resized_prec).reshape(-1, 5, 5)  # Reshape to (num_samples, height, width)
-    #sat_temp_data = np.array(resized_temp).reshape(-1, 5, 5)  # Reshape to (num_samples, height, width)
-    #sat_snow_data = np.array(resized_snow).reshape(-1, 5, 5)  # Reshape to (num_samples, height, width)
-#
-    #height = 5
-    #width  = 5
-#
-    #y_data_sat = np.column_stack([df_disch_insitu["discharge1"].tolist(), df_disch_insitu["discharge2"].tolist()])
-    #                                                                 
-    #sat_seq_length = 36
-    #valid_indices  = filter_valid_indices(y_data_sat, sat_seq_length) 
-    #sat_prec_data  = sat_prec_data[valid_indices]
-    #sat_temp_data  = sat_temp_data[valid_indices]
-    #sat_snow_data  = sat_snow_data[valid_indices]
-    #y_data_sat     = y_data_sat[valid_indices]
-##
-    ### Flatten spatial dimensions (height, width) into a single feature vector
-    #num_samples, height, width = sat_prec_data.shape
-    #sat_prec_data_reshaped = sat_prec_data.reshape(num_samples, -1)  # Shape: (num_samples, height * width)
-    #sat_temp_data_reshaped = sat_temp_data.reshape(num_samples, -1)
-    #sat_snow_data_reshaped = sat_snow_data.reshape(num_samples, -1)
-#
-    ### Remove nan values from the reshaped data
-    #sat_prec_data_reshaped = np.nan_to_num(sat_prec_data_reshaped, nan=0.0) 
-    #sat_temp_data_reshaped = np.nan_to_num(sat_temp_data_reshaped, nan=0.0)
-    #sat_snow_data_reshaped = np.nan_to_num(sat_snow_data_reshaped, nan=0.0)
-    #
-    ## Stack the features along the last axis
-    #sat_combined_data = np.stack([sat_prec_data_reshaped, sat_temp_data_reshaped, sat_snow_data_reshaped], axis=-1)  
-    #sat_combined_data = sat_combined_data.reshape(num_samples, -1)  # Flatten spatial dimensions for normalization
-
+    
     # Define the model parameters
     num_layers      = 4         # Increase the number of LSTM layers
     dropout         = 0.4       # Adjust the dropout rate
@@ -374,10 +212,7 @@ def main ():
     num_samples     = combined_data.shape[0]        # Number of samples
     input_size      = (num_samples, height, width)  # Flatten spatial dimensions for normalization
     ################################## CASE 2 ########################################
-    #seq_length      = sat_seq_length # hours
-    #num_samples     = sat_combined_data.shape[0]  # Number of samples
-    #input_size      = (num_samples, height, width)  # Flatten spatial dimensions for normalization
-
+   
     # Define the model
     model_LSTM         = LSTM(input_channels, height, width, hidden_size, output_size, num_layers=num_layers, dropout = dropout)
     model_BiLSTM       = BiLSTM(input_channels, height, width, hidden_size, output_size, num_layers=num_layers, dropout = dropout)
@@ -387,14 +222,7 @@ def main ():
     
     h_dataloader, h_val_dataloader, h_test_dataloader, scaler_y_hybrid = preprocess_data(combined_data, y_data, input_size, seq_length, batch_size, num_samples, channels = input_channels)
     
-    
-    ################################## CASE 2 ########################################
-    #Satellite data
-    #train_dataloader, val_dataloader, test_dataloader, scaler_y = preprocess_data(sat_combined_data, y_data_sat, input_size, sat_seq_length, batch_size, num_samples, channels = input_channels)
-    #
-    #hybrid_dataloader, hybrid_val_dataloader, hybrid_test_dataloader, scaler_y_hybrid = preprocess_data(sat_combined_data, y_data_sat, input_size, sat_seq_length, batch_size, num_samples, channels = input_channels)
-    
-    
+        
     ################################## CASE 1 ########################################
     # Train the model
     #model_LSTM     = train_model(model_LSTM, train_dataloader, val_dataloader, 'LSTM_stryn_historical', scaler_y)
@@ -403,72 +231,53 @@ def main ():
     #model_LSTM    = train_model(model_LSTM, train_dataloader, val_dataloader, 'LSTM_flat_stryn_historical', scaler_y)
     #model_BiLSTM  = train_model(model_BiLSTM, h_dataloader, h_val_dataloader, 'BiLSTM_flat_stryn_historical', scaler_y_hybrid)
 
-    #model_LSTM     = train_model(model_LSTM, train_dataloader, val_dataloader, 'LSTM_gaula_historical', scaler_y)
-    #mmodel_BiLSTM   = train_model(model_BiLSTM, h_dataloader, h_val_dataloader, 'BiLSTM_gaula_historical', scaler_y_hybrid)
+  
     
     # Load the saved model
     model_LSTM.load_state_dict(torch.load('model/save/LSTM_stryn_historical.pth'))
     model_BiLSTM.load_state_dict(torch.load('model/save/Hybrid_stryn_historical.pth'))
 
-    #model_LSTM.load_state_dict(torch.load('model/save/LSTM_gaula_historical.pth'))
-    #model_BiLSTM.load_state_dict(torch.load('model/save/BiLSTM_gaula_historical.pth'))
-
     len_train = len(train_dataloader.dataset)
     len_val   = len(val_dataloader.dataset)
     len_test  = len(test_dataloader.dataset)
-
-    #Gaula_RAVEN_test = Gaula_RAVEN[int(len_train + len_val):]       # Limit to the last 15% of the data for testing
-    #Gaula_actuals_test = Gaula_actuals[int(len_train + len_val):]   # Limit to the last 15% of the data for testing 
-    #Gaula_dates_test = Gaula_dates[int(len_train + len_val):]       # Adjust dates to match the test data length
-
+   
     Stryn_HBV_test = Stryn_HBV[int(len_train + len_val):]       # Limit to the last 15% of the data for testing
     Stryn_HBV_actuals_test = Stryn_HBV_actuals[int(len_train + len_val):]   # Limit to the last 15% of the data for testing
     Stryn_dates_test = Stryn_dates[int(len_train + len_val):]       # Adjust dates to match the test data length
     # Plot predictions vs actuals
-    #plot_historical(model_LSTM, model_BiLSTM, test_dataloader, h_test_dataloader, Gaula_RAVEN_test, scaler_y, scaler_y_hybrid, Gaula_dates_test)
-    #plot_historical_minifigures(model_LSTM, model_BiLSTM, test_dataloader, h_test_dataloader, Gaula_RAVEN, scaler_y, scaler_y_hybrid, Gaula_dates)
-    
-    plot_historical(model_LSTM, model_BiLSTM, test_dataloader, h_test_dataloader, Stryn_HBV_test, scaler_y, scaler_y_hybrid, Stryn_dates_test)
+    #plot_historical(model_LSTM, model_BiLSTM, test_dataloader, h_test_dataloader, Stryn_HBV_test, scaler_y, scaler_y_hybrid, Stryn_dates_test)
+    #plot_historical_peak(model_LSTM, model_BiLSTM, test_dataloader, h_test_dataloader, Stryn_HBV_test, scaler_y, scaler_y_hybrid, Stryn_dates_test)
     #plot_historical_minifigures(model_LSTM, model_BiLSTM, test_dataloader, h_test_dataloader, Stryn_HBV_test, scaler_y, scaler_y_hybrid, Stryn_dates_test)
-    ################################## CASE 2 ########################################
-    #model_LSTM      = train_model(model_LSTM, train_dataloader, val_dataloader, 'LSTM_stryn_satellite', scaler_y)
-    #model_Hybrid    = train_model(model_Hybrid, hybrid_dataloader, hybrid_val_dataloader, 'Hybrid_stryn_satellite', scaler_y_hybrid)
-
-    # Load the saved model
-    # model_LSTM.load_state_dict(torch.load('model/save/LSTM_stryn_satellite.pth'))
-    # model_Hybrid.load_state_dict(torch.load('model/save/Hybrid_stryn_satellite.pth'))
-
-    # Plot predictions vs actuals
-    #plot_satellite(model_LSTM, model_Hybrid, test_dataloader, hybrid_test_dataloader, scaler_y, scaler_y_hybrid)
+    #plot_historical_abnormal(model_LSTM, model_BiLSTM, test_dataloader, h_test_dataloader, Stryn_HBV_test, scaler_y, scaler_y_hybrid, Stryn_dates_test)
 
     #exploratory(height, width)
     #print_test_results(model_BiLSTM, h_test_dataloader, scaler_y_hybrid, name="BiLSTM")
     #print_test_results(model_LSTM, test_dataloader, scaler_y, name="LSTM")
-    #evaluation_HBV(Gaula_RAVEN, Gaula_actuals, name="RAVEN")
     #evaluation_HBV(Stryn_HBV, Stryn_HBV_actuals, name="HBV")
     #plot_study_area_v2()
 
-    #plot_climate_sensitivity(model_LSTM, model_BiLSTM, test_dataloader, h_test_dataloader, Stryn_HBV_test, Stryn_HBV_actuals_test, scaler_y, scaler_y_hybrid)
-    #plot_climate_sensitivity(model_LSTM, model_BiLSTM, test_dataloader, h_test_dataloader, Gaula_RAVEN_test, Gaula_actuals_test, scaler_y, scaler_y_hybrid)
-   
+    #plot_climate_sensitivity(model_LSTM, model_BiLSTM, test_dataloader, h_test_dataloader, Stryn_HBV_test, Stryn_HBV_actuals_test, scaler_y, scaler_y_hybrid)   
     
+    #interpretability_results(model_LSTM, test_dataloader, "LSTM", channels = input_channels)
+    #interpretability_results(model_BiLSTM, test_dataloader, "BiLSTM", channels = input_channels)
+
+    #interpret_file = ["Stryn_attributions_LSTM_station_0.csv", "Stryn_attributions_LSTM_station_1.csv"]
+    #plot_IG(model_LSTM, interpret_file, Stryn_dates_test, test_dataloader, scaler_y, name="LSTM")
+
+    #interpret_file = ["Stryn_attributions_BiLSTM_station_0.csv", "Stryn_attributions_BiLSTM_station_1.csv"]
+    #plot_IG(model_BiLSTM, interpret_file, Stryn_dates_test, h_test_dataloader, scaler_y, name="BiLSTM")
+
+    plot_uncertainty_values(Stryn_HBV_test, Stryn_HBV_actuals_test)
+
 def plot_catchment_data(points, catchment_extent):
-    """
-    Plots the catchment data for Stryn and Gaula.
-    """
-    # Stryn"
+
+    # Stryn
     catchments_file = r"data\Stryn\HBV snow\Elevation.rst"
-    #runoff_file = r"data\Gaula\InstantRunoff.rst"
 
      # Read catchment raster
     with rasterio.open(catchments_file) as src:
         catchment = src.read(1)
         catchment_extent = rasterio.plot.plotting_extent(src)
-
-    # Read runoff raster
-    #with rasterio.open(runoff_file) as src:
-    #    runoff = src.read(1)
-    #    runoff_extent = rasterio.plot.plotting_extent(src)
 
     met_stations = {}
     hydro_stations = {}
@@ -477,25 +286,11 @@ def plot_catchment_data(points, catchment_extent):
             hydro_stations[key] = (value[1], value[0])
         met_stations[key] = (value[1], value[0]) # Convert UTM to lat/lon
     
-    #met_stations = {}
-    #hydro_stations = {}
-    #for key, value in points.items():
-    #    if key in ["4", "1", "2", "3", "10"]: # Hydro stations
-    #        hydro_stations[key] = (value[1], value[0])
-    #    met_stations[key] = (value[1], value[0]) # Convert UTM to lat/lon
-
       # Plot
     fig, ax = plt.subplots(figsize=(10, 10))
     # Plot catchment
     show(catchment, extent=catchment_extent, ax=ax, cmap='mako', alpha=1, zorder=1, label='Catchment Area')
-    # Plot glacier
-    #show(glacier, extent=glacier_extent, ax=ax, cmap='Blues', alpha=0.5, zorder=2, label='Glacier Area')
-
-    # Plot runoff
-    #show(runoff, extent=runoff_extent, ax=ax, cmap='Blues', alpha=0.6, zorder=2, label='Runoff Area')
-
-    # Plot catchment outline
-    # Find contours at a constant value (e.g., 0.5 for binary mask)
+   
 
     # Set axis limits to raster extent
     ax.set_xlim(catchment_extent[0], catchment_extent[1])
@@ -800,45 +595,30 @@ def plot_historical(model, hybrid, dataloader, h_dataloader, HBV, scaler_y, scal
     HBV = HBV[-min_len:]
 
     # 4. Plot (for feature 0 as example)
+    colors = ["#6decf0", "#088819", "#15FF00", "#1F58D4", "viridis", "#FF5733", "purple", "orange"]
+
     fig, ax = plt.subplots(figsize=(10, 6))
-    ax.plot(dates, actuals[:, 0], label='Streamflow', color='blue')
-    ax.plot(dates, predictions[:, 0], label='LSTM', color="green", linestyle='dotted')
+    ax.plot(dates, actuals[:, 0], label='Streamflow', color=colors[3])
+    ax.plot(dates, predictions[:, 0], label='LSTM', color=colors[1], linestyle='dotted')
     ax.plot(dates, predictions_h[:, 0], label='BiLSTM', color='purple', linestyle='dashed')
     ax.plot(dates, HBV[:, 0], label='HBV', color='orange', linestyle='dashdot')
 
-    ax.plot(dates, actuals[:, 1], color='blue')
-    ax.plot(dates, predictions[:, 1], color="green", linestyle='dotted')
+    ax.plot(dates, actuals[:, 1], color=colors[3])
+    ax.plot(dates, predictions[:, 1], color=colors[1], linestyle='dotted')
     ax.plot(dates, predictions_h[:, 1], color='purple', linestyle='dashed')
     ax.plot(dates, HBV[:, 1], color='orange', linestyle='dashdot')
 
-    #ax.plot(dates, actuals[:, 2], color='blue')
-    #ax.plot(dates, predictions[:, 2], color="green", linestyle='dotted')
-    #ax.plot(dates, predictions_h[:, 2], color='purple', linestyle='dashed')
-    #ax.plot(dates, HBV[:, 2], color='orange', linestyle='dashdot')
-
-    
-    #plt.figure(figsize=(10, 6))
-    #plt.plot(actuals[:, 1], label=f'Streamflow', color='blue')
-    #plt.plot(predictions[:, 1], label=f'LSTM', color="green", linestyle='dotted')
-    #plt.plot(predictions_h[:, 1], label=f'BiLSTM', color='purple', linestyle='dashed')  # Plot Hybrid model predictions
-    #plt.plot(HBV[:, 1], label=f'HBV', color='orange', linestyle='dashdot')  # Plot HBV model predictions
-    
-    #std_deviation, h1, h2, h3 = HMMR_3(actuals, predictions)
-    std_deviation, h1, h2 = HMMR_2(actuals, predictions_h)
+    std_deviation, h1, h2 = HMMR_2(actuals, HBV)
 
     # Plot uncertainty (shaded area)
     ax.fill_between(dates,
                     actuals[:,0] - std_deviation[0, h1],
                     actuals[:,0] + std_deviation[0, h1],
-                    color='blue', alpha=0.2, label='Standard Deviation')
+                    color=colors[3], alpha=0.2, label='Standard Deviation')
     ax.fill_between(dates,
                 actuals[:,1] - std_deviation[1, h2],
                 actuals[:,1] + std_deviation[1, h2],
-                color='blue', alpha=0.2)
-    #ax.fill_between(dates,
-    #            actuals[:,2] - std_deviation[2, h3],
-    #            actuals[:,2] + std_deviation[2, h3],
-    #            color='blue', alpha=0.2)
+                color=colors[3], alpha=0.2)
 
     ax.set_ylabel('Streamflow [m³/s]')
 
@@ -859,6 +639,184 @@ def plot_historical(model, hybrid, dataloader, h_dataloader, HBV, scaler_y, scal
     ax.set_title('Stryn: Predictions with Uncertainty and HBV Comparison', fontsize=16)
     ax.legend()
     plt.tight_layout(pad=2.0)
+    plt.show()
+    return
+
+def plot_historical_peak(model, hybrid, dataloader, h_dataloader, HBV, scaler_y, scaler_y_h, dates):
+    dates = pd.to_datetime(dates, format="%Y-%m-%d")  # Convert dates to datetime objects
+    model.eval()
+    hybrid.eval()
+    predictions = []
+    predictions_h = []
+    actuals = []
+    
+    with torch.no_grad():
+        for batch_x, batch_y in dataloader:
+            outputs = model(batch_x)
+            predictions.append(outputs.cpu().numpy())
+            actuals.append(batch_y.cpu().numpy())
+    
+    # Concatenate predictions and actuals along the first axis
+    predictions = np.concatenate(predictions, axis=0)  # Shape: (num_samples, output_size)
+    actuals = np.concatenate(actuals, axis=0)          # Shape: (num_samples, output_size)
+    
+    with torch.no_grad():
+        for batch_x, batch_y in h_dataloader:
+            outputs_h = hybrid(batch_x)
+            predictions_h.append(outputs_h.cpu().numpy())
+    
+    predictions_h = np.concatenate(predictions_h, axis=0)  # Shape: (num_samples, output_size)
+
+    # Ensure predictions have the same shape as the scaler's expected input
+    if predictions.shape[1] != scaler_y.min_.shape[0]:
+        raise ValueError(f"Predictions shape {predictions.shape} does not match scaler's expected shape {scaler_y.min_.shape}")
+
+    # Inverse transform the predictions and actuals to the original scale
+    predictions = scaler_y.inverse_transform(predictions)
+    actuals = scaler_y.inverse_transform(actuals)
+    
+    predictions_h = scaler_y_h.inverse_transform(predictions_h)
+
+    min_len = min(len(dates), actuals.shape[0], predictions.shape[0], predictions_h.shape[0], HBV.shape[0])
+    dates = dates[-min_len:]
+    HBV = HBV[-min_len:]
+
+    # 4. Plot (for feature 0 as example)
+    colors = ["#6decf0", "#088819", "#15FF00", "#1F58D4", "viridis", "#FF5733", "purple", "orange"]
+
+    lines = []
+    labels = []
+    fig, axs = plt.subplots(1, 2, figsize=(12, 4))
+    axs = axs.flatten()  # Flatten the 2D array of axes to 1D for easier iteration
+    #fig.suptitle('Stryn: Peak Flow Events', fontsize=18)
+    for i, ax in enumerate(axs):
+        ax.set_ylabel('Streamflow [m³/s]')
+        ax.set_title(f'{i+5}', fontsize=16)
+    
+        ax.plot(dates, actuals[:, 1], label='Streamflow', color=colors[3])
+        ax.plot(dates, predictions[:, 1], label='LSTM', color=colors[1], linestyle='dotted')
+        ax.plot(dates, predictions_h[:, 1], label='BiLSTM', color='purple', linestyle='dashed')
+        ax.plot(dates, HBV[:, 1], label='HBV', color='orange', linestyle='dashdot')
+
+        std_deviation, h1, h2 = HMMR_2(actuals, HBV)
+
+        # Plot uncertainty (shaded area)
+        ax.fill_between(dates,
+                        actuals[:,1] - std_deviation[1, h2],
+                        actuals[:,1] + std_deviation[1, h2],
+                        color=colors[3], alpha=0.2, label='Standard Deviation')
+
+
+        # Set major ticks at each month and minor ticks at each day
+        ax.xaxis.set_major_locator(mdates.MonthLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%y'))  # Year-Month format
+
+        ax.xaxis.set_minor_locator(mdates.DayLocator(interval=5))
+        ax.xaxis.set_minor_formatter(mdates.DateFormatter('%d'))
+
+        # Show both major and minor ticks
+        ax.tick_params(axis='x', which='major', length=10, labelsize=14, pad=10)   # Increase pad for major ticks
+        ax.tick_params(axis='x', which='minor', length=5, labelsize=12, pad=2)     # Decrease pad for minor ticks
+        ax.tick_params(axis='y', labelsize=12)
+        # Rotate month labels for clarity
+        plt.setp(ax.get_xticklabels(minor=True), ha='right', rotation=90, fontsize=10)
+        
+        # Store lines for the legend
+        new_line, new_label = ax.get_legend_handles_labels()
+        lines.extend(new_line)  # Streamflow
+        labels.extend(new_label)  # Streamflow label
+    unique = dict(zip(labels, lines))
+    fig.legend(unique.values(), unique.keys(), loc='center', bbox_to_anchor=(0.5, 0.02), ncol=5, frameon=False, fontsize=14)
+    plt.tight_layout(rect=[0, 0.04, 1, 1])
+    plt.show()
+    return
+
+def plot_historical_abnormal(model, hybrid, dataloader, h_dataloader, HBV, scaler_y, scaler_y_h, dates):
+    dates = pd.to_datetime(dates, format="%Y-%m-%d")  # Convert dates to datetime objects
+    model.eval()
+    hybrid.eval()
+    predictions = []
+    predictions_h = []
+    actuals = []
+    
+    with torch.no_grad():
+        for batch_x, batch_y in dataloader:
+            outputs = model(batch_x)
+            predictions.append(outputs.cpu().numpy())
+            actuals.append(batch_y.cpu().numpy())
+    
+    # Concatenate predictions and actuals along the first axis
+    predictions = np.concatenate(predictions, axis=0)  # Shape: (num_samples, output_size)
+    actuals = np.concatenate(actuals, axis=0)          # Shape: (num_samples, output_size)
+    
+    with torch.no_grad():
+        for batch_x, batch_y in h_dataloader:
+            outputs_h = hybrid(batch_x)
+            predictions_h.append(outputs_h.cpu().numpy())
+    
+    predictions_h = np.concatenate(predictions_h, axis=0)  # Shape: (num_samples, output_size)
+
+    # Ensure predictions have the same shape as the scaler's expected input
+    if predictions.shape[1] != scaler_y.min_.shape[0]:
+        raise ValueError(f"Predictions shape {predictions.shape} does not match scaler's expected shape {scaler_y.min_.shape}")
+
+    # Inverse transform the predictions and actuals to the original scale
+    predictions = scaler_y.inverse_transform(predictions)
+    actuals = scaler_y.inverse_transform(actuals)
+    
+    predictions_h = scaler_y_h.inverse_transform(predictions_h)
+
+    min_len = min(len(dates), actuals.shape[0], predictions.shape[0], predictions_h.shape[0], HBV.shape[0])
+    dates = dates[-min_len:]
+    HBV = HBV[-min_len:]
+
+    # 4. Plot (for feature 0 as example)
+    colors = ["#6decf0", "#088819", "#15FF00", "#1F58D4", "viridis", "#FF5733", "purple", "orange"]
+
+    lines = []
+    labels = []
+    fig, axs = plt.subplots(1, 2, figsize=(12, 4))
+    axs = axs.flatten()  # Flatten the 2D array of axes to 1D for easier iteration
+    #fig.suptitle('Stryn: Abnormal Flow Events', fontsize=18)
+    for i, ax in enumerate(axs):
+        ax.set_ylabel('Streamflow [m³/s]')
+        ax.set_title(f'{i+5}', fontsize=16)
+    
+        ax.plot(dates, actuals[:, 1], label='Streamflow', color=colors[3])
+        ax.plot(dates, predictions[:, 1], label='LSTM', color=colors[1], linestyle='dotted')
+        ax.plot(dates, predictions_h[:, 1], label='BiLSTM', color='purple', linestyle='dashed')
+        ax.plot(dates, HBV[:, 1], label='HBV', color='orange', linestyle='dashdot')
+
+        std_deviation, h1, h2 = HMMR_2(actuals, HBV)
+
+        # Plot uncertainty (shaded area)
+        ax.fill_between(dates,
+                        actuals[:,1] - std_deviation[1, h2],
+                        actuals[:,1] + std_deviation[1, h2],
+                        color=colors[3], alpha=0.2, label='Standard Deviation')
+
+
+        # Set major ticks at each month and minor ticks at each day
+        ax.xaxis.set_major_locator(mdates.MonthLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%y'))  # Year-Month format
+
+        ax.xaxis.set_minor_locator(mdates.DayLocator(interval=5))
+        ax.xaxis.set_minor_formatter(mdates.DateFormatter('%d'))
+
+        # Show both major and minor ticks
+        ax.tick_params(axis='x', which='major', length=10, labelsize=14, pad=10)   # Increase pad for major ticks
+        ax.tick_params(axis='x', which='minor', length=5, labelsize=12, pad=2)     # Decrease pad for minor ticks
+        ax.tick_params(axis='y', labelsize=12)
+        # Rotate month labels for clarity
+        plt.setp(ax.get_xticklabels(minor=True), ha='right', rotation=90, fontsize=10)
+        
+        # Store lines for the legend
+        new_line, new_label = ax.get_legend_handles_labels()
+        lines.extend(new_line)  # Streamflow
+        labels.extend(new_label)  # Streamflow label
+    unique = dict(zip(labels, lines))
+    fig.legend(unique.values(), unique.keys(), loc='center', bbox_to_anchor=(0.5, 0.02), ncol=5, frameon=False, fontsize=14)
+    plt.tight_layout(rect=[0, 0.04, 1, 1])
     plt.show()
     return
 
@@ -899,9 +857,9 @@ def plot_historical_minifigures(model, hybrid, dataloader, h_dataloader, HBV, sc
     dates = dates[-min_len:]
     HBV = HBV[-min_len:]
     # Select years of interest
+    colors = ["#6decf0", "#088819", "#15FF00", "#1F58D4", "viridis", "#FF5733", "purple", "orange"]
     #years = [2018, 2019]
     years = [2020, 2021, 2022]
-    #years = [2004, 2005]
     n_years = len(years)
     fig, axes = plt.subplots(n_years, 1, figsize=(12, 3 * n_years), sharex=False)
     years_arr = dates.dt.year if hasattr(dates, 'dt') else dates.year
@@ -912,38 +870,30 @@ def plot_historical_minifigures(model, hybrid, dataloader, h_dataloader, HBV, sc
         if not np.any(mask):
             continue  # Skip if no data for this year
 
-        ax.plot(dates[mask], actuals[mask, 0], label="Streamflow", color='blue')
-        ax.plot(dates[mask], predictions[mask, 0], label="LSTM", color="green", linestyle='dotted')
+        ax.plot(dates[mask], actuals[mask, 0], label="Streamflow", color=colors[3])
+        ax.plot(dates[mask], predictions[mask, 0], label="LSTM", color=colors[1], linestyle='dotted')
         ax.plot(dates[mask], predictions_h[mask, 0], label="BiLSTM", color='purple', linestyle='dashed')
         ax.plot(dates[mask], HBV[mask, 0], label="HBV", color='orange', linestyle='dashdot')
 
-        ax.plot(dates[mask], actuals[mask, 1], color='blue')
-        ax.plot(dates[mask], predictions[mask, 1], color="green", linestyle='dotted')
+        ax.plot(dates[mask], actuals[mask, 1], color=colors[3])
+        ax.plot(dates[mask], predictions[mask, 1], color=colors[1], linestyle='dotted')
         ax.plot(dates[mask], predictions_h[mask, 1], color='purple', linestyle='dashed')
         ax.plot(dates[mask], HBV[mask, 1], color='orange', linestyle='dashdot')
         
-        # Optional: plot uncertainty if available
-        std_deviation, h1, h2 = HMMR_2(actuals[mask], predictions_h[mask])
-        #std_deviation, h1, h2, h3 = HMMR_3(actuals[mask], predictions[mask])
+      
+        std_deviation, h1, h2 = HMMR_2(actuals[mask], HBV[mask])
         ax.fill_between(
             dates[mask],
             actuals[mask, 0] - std_deviation[0, h1],
             actuals[mask, 0] + std_deviation[0, h1],
-            color='blue', alpha=0.2
+            color=colors[3], alpha=0.2
         )
         ax.fill_between(
             dates[mask],
             actuals[mask, 1] - std_deviation[1, h2],
             actuals[mask, 1] + std_deviation[1, h2],
-            color='blue', alpha=0.2
+            color=colors[3], alpha=0.2
         )
-        #ax.fill_between(
-        #    dates[mask],
-        #    actuals[mask, 2] - std_deviation[2, h3],
-        #    actuals[mask, 2] + std_deviation[2, h3],
-        #    color='blue', alpha=0.2
-        #)
-
         ax.set_ylabel('Streamflow [m³/s]')
         ax.set_title(f'Stryn: {year}')
         
@@ -1116,76 +1066,6 @@ def plot_climate_sensitivity(model, hybrid, dataloader, h_dataloader, HBV, HBV_a
     evaluation_HBV(upper_10th_HBV, upper_10th_actuals, name="Upper 10th Percentile (HBV)")
     return
 
-def plot_satellite(model, hybrid, dataloader, h_dataloader, scaler_y, scaler_y_h):
-
-    model.eval()
-    hybrid.eval()
-    predictions_h = []
-    predictions = []
-    actuals = []
-    with torch.no_grad():
-        for batch_x, batch_y in dataloader:
-            output = model(batch_x)
-            # Store the means and variances
-            predictions.append(output.cpu().numpy())
-            actuals.append(batch_y.cpu().numpy())
-    # Concatenate predictions along the first axis
-    predictions = np.concatenate(predictions, axis=0)  # (7, 7, output_size) 
-    predictions = scaler_y.inverse_transform(predictions)
-    actuals = np.concatenate(actuals, axis=0)          # Shape: (num_samples, output_size)
-    actuals = scaler_y.inverse_transform(actuals)
-
-    with torch.no_grad():
-        for batch_x, batch_y in h_dataloader:
-            outputs_h = hybrid(batch_x)
-            predictions_h.append(outputs_h.cpu().numpy())
-    
-    predictions_h = np.concatenate(predictions_h, axis=0)  # Shape: (num_samples, output_size)
-    predictions_h = scaler_y_h.inverse_transform(predictions_h)
-    
-    plt.figure(figsize=(10, 6))
-    plt.plot(actuals[:, 1], label=f'Streamflow', color='blue')
-    plt.plot(predictions[:, 1], label=f'LSTM', color="green", linestyle='dotted')
-    plt.plot(predictions_h[:, 1], label=f'Hybrid', color='purple', linestyle='dashed')  # Plot Hybrid model predictions
-    
-    std_deviation, h1, h2 = HMMR_2(actuals, predictions)
-    # Plot uncertainty (shaded area)
-    x = np.arange(len(predictions))  # Assuming predictions is a 1D array for simplicity
-    plt.fill_between(x,
-                     actuals[:, 1] - std_deviation[1, h2],
-                     actuals[:, 1] + std_deviation[1, h2],
-                     color='blue', alpha=0.2, label='Standard Deviation')
-    
-    plt.xlabel('Time Step [hours]')
-    plt.ylabel('Streamflow [m³/s]')
-    plt.title('Stryn - LSTM: Predictions with Uncertainty (Satellite Data)')
-    plt.legend()
-    plt.show()
-
-def flood_hydrographs(rain, snow, q_data_1, q_data_2):
-
-    x = np.arange(len(rain))  # Assuming x is the time steps
-    fig, ax1 = plt.subplots(figsize=(12, 6))
-    plt.title('High Precipitation and Flood Hydrographs')
-    # Plot precipitation as a bar chart
-    ax1.set_xlabel('Time Step [days]')
-    ax1.set_ylabel('Precipitation', color='blue')
-    ax1.hlines(0, xmin=x[0], xmax=x[-1], color='black', linewidth=0.5, linestyle='--')
-    ax1.plot(x, rain, color='blue', label='Rain')
-    ax1.fill_between(x, rain, color='blue', alpha=0.3)
-    ax1.plot(x, snow, color='green', label='Snow')
-    ax1.fill_between(x, snow, color='green', alpha=0.3)
-    ax1.tick_params(axis='y', labelcolor='blue')
-
-    ax2 = ax1.twinx()
-    ax2.set_ylabel('Discharge', color='red')
-    ax2.plot(x, q_data_1, color='red', label='Discharge 1')
-    ax2.plot(x, q_data_2, color='red', label='Discharge 2')
-    ax2.tick_params(axis='y', labelcolor='red')
-
-    fig.tight_layout()
-    plt.show()
-
 def exploratory(height, width):
     met_files = sorted(glob.glob(os.path.join("data/satellite_data/", "MET_*.json")))
 
@@ -1287,8 +1167,7 @@ def print_test_results(model, test_dataloader, scaler_y, name="Model"):
     print(f"\n")
     print(f"Test Results for {name}:")
     print(f"Station\tNSE\tRMSE\tMAE\tMAPE\tR^2\tPearson\tKGE")
-    #feature_idx = [0, 1]
-    feature_idx = [0, 1, 2]
+    feature_idx = [0, 1]
     model.eval()
     all_y_true = []
     all_y_pred = []
@@ -1327,8 +1206,7 @@ def evaluation_HBV(HBV, actual, name="Model"):
     print(f"\n")
     print(f"Test Results for {name}:")
     print(f"Station\tNSE\tRMSE\tMAE\tMAPE\tR^2\tPearson\tKGE")
-    feature_idx = [0,1] # for the second feature
-    #feature_idx = [0, 1, 2]  # Adjusted to include all features for evaluation  
+    feature_idx = [0,1] # for the second feature 
     for f in feature_idx:
         y_true = actual[:, f]
         y_pred = HBV[:, f]
@@ -1347,6 +1225,160 @@ def evaluation_HBV(HBV, actual, name="Model"):
 
         print(f"{f}\t{nse:.4f}\t{rmse:.4f}\t{mae:.4f}\t{mape:.4f}\t{r_squared:.4f}\t{pearson:.4f}\t{kge:.4f}")
     print(f"\n")
+    return
+
+def interpretability_results(model, test_dataloader, name, channels=1):
+    station_list = [0, 1]
+    for s in station_list:
+        station = s
+        print(f"IG Results for Stryn station {station}, Model {name}: \n")
+        model.eval()
+        all_grads = []
+        for batch_x, batch_y in test_dataloader:
+            IG_grads = integrated_gradients(model, batch_x, channels=channels, target_index=station)
+            all_grads.append(IG_grads.cpu().numpy())
+        
+        # Shape (287, 14, 5, 7, 14)
+        all_grads = np.concatenate(all_grads, axis=0)  # shape: (num_samples, seq_length, channels, height, width)
+
+        all_grads_mean = all_grads.mean(axis=(-2, -1))
+        
+        # Shape (287, 5, 7 ,14)
+        last_step_attributions = all_grads_mean[:, -1, :]  
+
+        labels = ["Precipitation", "Temperature", "Evaporation"]
+
+        # Create a DataFrame with appropriate column names
+        df_attr = pd.DataFrame(last_step_attributions, columns=labels)
+
+        # Save to CSV
+        df_attr.to_csv(f"Stryn_attributions_{name}_station_{station}.csv", index=False)
+
+    return
+
+def plot_IG(model, file_path, dates, dataloader, scaler, name=None):
+    station_list = [0, 1]
+    model.eval()
+    predictions = []
+    actuals = []
+    
+    with torch.no_grad():
+        for batch_x, batch_y in dataloader:
+            outputs = model(batch_x)
+            predictions.append(outputs.cpu().numpy())
+            actuals.append(batch_y.cpu().numpy())
+    
+    # Concatenate predictions and actuals along the first axis
+    predictions = np.concatenate(predictions, axis=0)  # Shape: (num_samples, output_size)
+    actuals = np.concatenate(actuals, axis=0)          # Shape: (num_samples, output_size)
+    
+
+    # Inverse transform the predictions and actuals to the original scale
+    predictions = scaler.inverse_transform(predictions)
+    actuals = scaler.inverse_transform(actuals)
+    
+    dates = dates[-1340:]  # Ensure we only plot the last 1340 days
+    dates = pd.to_datetime(dates, format="%Y-%m-%d")  # Convert dates to datetime objects
+    
+
+    labels = ["Precipitation", "Temperature", "Evaporation"]
+    colors = ["#1F58D4",  "#FF5733", "#15FF00"]
+    #colors = ["#1F58D4",  "#FF5733", "#15FF00", "#088819","#6decf0"]
+    
+    u_labels = []
+    u_labels = []
+    fig, axes = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+    axes = axes.flatten()  # Flatten the axes array for easier indexing 
+    fig.suptitle(f'Stryn: Integrated Gradients Attribution: {name}', fontsize=16)
+    for i, ax in enumerate(axes):
+
+        last_step_attributions = pd.read_csv(file_path[i]).values
+        total_attr = np.abs(last_step_attributions).sum(axis=1, keepdims=True)
+        total_attr[total_attr == 0] = 1e-8
+        shares = np.abs(last_step_attributions) / total_attr  # All values between 0 and 1, sum to 1
+
+        shares_T = shares.T  # (n_channels, n_times)
+        ax1 = ax
+        ax1.stackplot(dates, shares_T, labels=labels, cmap="viridis", alpha=0.8)
+
+        ax1.set_ylabel('Attribution')
+        ax2 = ax1.twinx()
+        #ax2.plot(dates, predictions[:, station], label='LSTM', color= "#088819", linestyle='dotted')
+        ax2.plot(dates, predictions[:, i], label=name, color= "purple", linestyle='dashed')
+        ax2.plot(dates, actuals[:, i], label='Streamflow', color=colors[0])
+        ax2.set_ylabel('Streamflow [m³/s]', fontsize=12)
+        ax2.tick_params(axis='y', labelsize=12)
+        
+        ax1.set_title(f'Station {i+1}')
+
+        # Rotate month labels for clarity
+        plt.setp(ax1.get_xticklabels(minor=True), ha='right', rotation=90, fontsize=10)
+       
+        # Set major ticks at each year and minor ticks at each month
+        ax1.xaxis.set_major_locator(mdates.YearLocator())
+        ax1.xaxis.set_major_formatter(mdates.DateFormatter('\n%Y'))  # Newline for year label below months
+
+        ax1.xaxis.set_minor_locator(mdates.MonthLocator(interval=3))
+        ax1.xaxis.set_minor_formatter(mdates.DateFormatter('%b'))
+
+        # Show both major and minor ticks
+        ax1.tick_params(axis='x', which='major', length=10, labelsize=14)
+        ax1.tick_params(axis='x', which='minor', length=5, labelsize=12)
+        ax1.tick_params(axis='y', labelsize=12)
+        # Store lines for the legend
+        lines1, labels1 = ax1.get_legend_handles_labels()
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        lines = lines1 + lines2
+        labels = labels1 + labels2
+        if i == 1:
+            u_labels = labels.copy()
+            u_lines = lines.copy()
+    unique = dict(zip(u_labels, u_lines))     
+    fig.legend(unique.values(), unique.keys(), loc='center', bbox_to_anchor=(0.5, 0.03), ncol=5, frameon=False, fontsize=14)
+    plt.tight_layout(pad=1.4,rect=[0, 0.08, 1, 1])
+    plt.subplots_adjust(hspace=.3)
+    plt.show()
+    return
+
+def plot_uncertainty_values(forecast, observation, n_states=2):
+
+    """
+    1. State Distribution of Streamflow 
+    2. Distribution of Residuals
+    """
+
+    std_deviation, h1, h2 = HMMR_2(observation, forecast)
+
+    # So the hidden states for each of the feautres is stored in h1, h2, h3.
+    # For each station I want to plot the distribution of the Streamflow for 
+    # each of the two hidden states. 
+
+    fig, axes = plt.subplots(nrows=n_states, ncols=1, figsize=(10, 6 * n_states), sharex=True)
+    fig.suptitle('Stryn: State Distribution of Streamflow', fontsize=16)
+    colors = ["#6decf0", "#088819", "#15FF00", "#1F58D4", "viridis", "#FF5733", "purple", "orange"]
+    for i in range(n_states):
+        ax = axes[i]
+        # Plot the distribution of the streamflow for each hidden state
+        ax.hist(observation[:, 0][h1 == i], bins=30, alpha=0.5, color=colors[1], label=f'Station 1')
+        ax.hist(observation[:, 1][h2 == i], bins=30, alpha=0.5, color=colors[2], label=f'Station 2')
+        
+        ax.set_title(f'State {i}')
+        ax.set_xlabel('Streamflow [m³/s]')
+        ax.set_ylabel('Frequency')
+        lines, labels = ax.get_legend_handles_labels()
+        if i == 0:
+            # Add legend only for the first subplot
+            ax.legend(
+                lines,
+                labels,
+                loc='upper center',
+                bbox_to_anchor=(0.5, -0.125),  # Centered below the axes
+                ncol=3,                       # Number of columns in the legend
+                frameon=False
+            )
+    plt.tight_layout(pad=2.0)
+    plt.subplots_adjust(hspace=0.4) 
+    plt.show()
     return
 
 if __name__ == "__main__":
