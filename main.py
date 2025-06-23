@@ -428,7 +428,7 @@ def main ():
     #plot_historical(model_LSTM, model_BiLSTM, test_dataloader, h_test_dataloader, Gaula_RAVEN_test, scaler_y, scaler_y_hybrid, Gaula_dates_test)
     #plot_historical_minifigures(model_LSTM, model_BiLSTM, test_dataloader, h_test_dataloader, Gaula_RAVEN, scaler_y, scaler_y_hybrid, Gaula_dates)
     
-    plot_historical(model_LSTM, model_BiLSTM, test_dataloader, h_test_dataloader, Stryn_HBV_test, scaler_y, scaler_y_hybrid, Stryn_dates_test)
+    #plot_historical(model_LSTM, model_BiLSTM, test_dataloader, h_test_dataloader, Stryn_HBV_test, scaler_y, scaler_y_hybrid, Stryn_dates_test)
     #plot_historical_minifigures(model_LSTM, model_BiLSTM, test_dataloader, h_test_dataloader, Stryn_HBV_test, scaler_y, scaler_y_hybrid, Stryn_dates_test)
     ################################## CASE 2 ########################################
     #model_LSTM      = train_model(model_LSTM, train_dataloader, val_dataloader, 'LSTM_stryn_satellite', scaler_y)
