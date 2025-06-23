@@ -152,6 +152,7 @@ def inverse_distance_weighting(points, measurements, x_grid, y_grid, power):
     """
     Generate a 2D grid of interpolated values using Inverse Distance Weighting (IDW).
     :param points: Dictionary of (x, y) coordinates of the known data points.
+    :param points: Dictionary of (x, y) coordinates of the known data points.
     :param measurements: Dictionary of values at the known data points.
     :param power: Power parameter for IDW (higher values give more weight to closer points).
     :return: List of 2D grids of interpolated values.

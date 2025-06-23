@@ -8,11 +8,17 @@ from rasterio.plot import show
 from rasterio.features import shapes
 from shapely.geometry import shape, Point, Polygon
 
+from rasterio.features import shapes
+from shapely.geometry import shape, Point, Polygon
+
 import geopandas as gpd
 import contextily as ctx
 import matplotlib.ticker as mticker
 from matplotlib.patches import ConnectionPatch
+import matplotlib.ticker as mticker
+from matplotlib.patches import ConnectionPatch
 
+from src.helper_functions import *
 from src.helper_functions import *
 
 def plot_sensitivity(model, dataloader, scaler_y, number):
@@ -172,6 +178,9 @@ def create_catchment_map(catchment_name, catchment_geotiff_path, met_stations, h
     Create GeoDataFrames for catchment area, meteorological stations, and hydrological stations
     using a GeoTIFF raster for the catchment area.
 
+    Create GeoDataFrames for catchment area, meteorological stations, and hydrological stations
+    using a GeoTIFF raster for the catchment area.
+
     Parameters:
         catchment_name (str): Name of the catchment.
         catchment_geotiff_path (str): Path to the GeoTIFF file representing the catchment mask.
@@ -203,7 +212,43 @@ def create_catchment_map(catchment_name, catchment_geotiff_path, met_stations, h
     # Reproject to EPSG:4326 if needed
     if catchment_gdf.crs != "EPSG:4326":
         catchment_gdf = catchment_gdf.to_crs("EPSG:4326")
+        catchment_name (str): Name of the catchment.
+        catchment_geotiff_path (str): Path to the GeoTIFF file representing the catchment mask.
+        met_stations (dict): {'name1': (lon, lat), ...}
+        hydro_stations (dict): {'name1': (lon, lat), ...}
 
+    Returns:
+        catchment_gdf (GeoDataFrame): Catchment area polygons.
+        met_gdf (GeoDataFrame): Meteorological stations.
+        hydro_gdf (GeoDataFrame): Hydrological stations.
+    """
+    with rasterio.open(catchment_geotiff_path) as src:
+        raster = src.read(1)
+        mask = raster != src.nodata
+
+        # Extract polygons from the raster mask
+        results = (
+            {'properties': {'raster_val': v}, 'geometry': s}
+            for s, v in shapes(raster, mask=mask, transform=src.transform)
+            if v != src.nodata
+        )
+        polygons = [shape(feature['geometry']) for feature in results]
+        catchment_gdf = gpd.GeoDataFrame(
+            {'name': [catchment_name] * len(polygons)},
+            geometry=polygons,
+            crs=src.crs
+        )
+
+    # Reproject to EPSG:4326 if needed
+    if catchment_gdf.crs != "EPSG:4326":
+        catchment_gdf = catchment_gdf.to_crs("EPSG:4326")
+
+    # Create GeoDataFrame for meteorological stations
+    met_gdf = gpd.GeoDataFrame(
+        {'name': list(met_stations.keys())},
+        geometry=[Point(coord) for coord in met_stations.values()],
+        crs="EPSG:4326"
+    )
     # Create GeoDataFrame for meteorological stations
     met_gdf = gpd.GeoDataFrame(
         {'name': list(met_stations.keys())},

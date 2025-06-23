@@ -1,5 +1,6 @@
 .venv/
 .conda/
+.conda/
 __pycache__/
 *.pyc
 *.pyo
@@ -9,6 +10,8 @@ __pycache__/
 *.DS_Store
 *.ipynb_checkpoints/
 model/save/
+data/interpolated_spatial_data/*.json
+data/Stryn/*.tiff
 data/interpolated_spatial_data/*.json
 data/Stryn/*.tiff
 data/graphs/
