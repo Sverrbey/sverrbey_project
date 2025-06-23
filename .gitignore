@@ -21,3 +21,5 @@ data/Norway_shapefile/*
 *.cache.sqlite
 *.csv.cache.sqlite
 *.csv
+*.cache
+*.cache.json
